@@ -1,0 +1,337 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主页</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f1a;
+            --bg-secondary: #1a1a2e;
+            --bg-card: #222240;
+            --text-primary: #e8e8f0;
+            --text-secondary: #9090b0;
+            --accent-1: #6c63ff;
+            --accent-2: #00d4aa;
+            --accent-3: #ff6b6b;
+            --accent-4: #ffa94d;
+            --accent-5: #74c0fc;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: "Noto Sans SC", -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .bg-animation {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: -1; overflow: hidden;
+        }
+        .bg-animation .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.3;
+            animation: orbFloat 20s ease-in-out infinite;
+        }
+        .bg-animation .orb:nth-child(1) { width: 400px; height: 400px; background: var(--accent-1); top: -10%; left: -5%; animation-delay: 0s; }
+        .bg-animation .orb:nth-child(2) { width: 350px; height: 350px; background: var(--accent-2); bottom: -10%; right: -5%; animation-delay: -7s; }
+        .bg-animation .orb:nth-child(3) { width: 300px; height: 300px; background: var(--accent-3); top: 40%; left: 50%; animation-delay: -14s; }
+        @keyframes orbFloat {
+            0%, 100% { transform: translate(0,0) scale(1); }
+            33% { transform: translate(60px,-60px) scale(1.1); }
+            66% { transform: translate(-40px,40px) scale(0.9); }
+        }
+        header {
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .logo { font-size: 24px; font-weight: 700; background: linear-gradient(135deg, var(--accent-1), var(--accent-2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .header-right { display: flex; align-items: center; gap: 20px; }
+        .datetime { font-size: 14px; color: var(--text-secondary); }
+        .hero { text-align: center; padding: 60px 20px 40px; }
+        .hero h1 {
+            font-size: 48px; font-weight: 700; margin-bottom: 12px;
+            background: linear-gradient(135deg, #fff 0%, var(--accent-1) 50%, var(--accent-2) 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .hero p { font-size: 18px; color: var(--text-secondary); max-width: 500px; margin: 0 auto; line-height: 1.6; }
+        .search-container { max-width: 500px; margin: 30px auto 40px; padding: 0 20px; }
+        .search-box {
+            display: flex; align-items: center;
+            background: var(--bg-card); border: 1px solid var(--glass-border);
+            border-radius: 50px; padding: 12px 24px;
+            transition: all 0.3s ease;
+        }
+        .search-box:focus-within { border-color: var(--accent-1); box-shadow: 0 0 20px rgba(108,99,255,0.15); }
+        .search-box i { color: var(--text-secondary); margin-right: 12px; font-size: 16px; }
+        .search-box input { flex: 1; background: none; border: none; outline: none; color: var(--text-primary); font-size: 16px; font-family: inherit; }
+        .search-box input::placeholder { color: var(--text-secondary); }
+        .section-title { max-width: 1200px; margin: 0 auto 24px; padding: 0 24px; font-size: 20px; font-weight: 500; color: var(--text-secondary); display: flex; align-items: center; gap: 10px; }
+        .section-title i { font-size: 18px; }
+        .services-grid { max-width: 1200px; margin: 0 auto; padding: 0 24px 40px; display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        .service-card {
+            background: var(--glass-bg); backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border); border-radius: 16px;
+            padding: 24px; transition: all 0.3s ease; cursor: pointer;
+            position: relative; overflow: hidden;
+        }
+        .service-card:hover { transform: translateY(-4px); border-color: rgba(108,99,255,0.3); box-shadow: var(--shadow); }
+        .service-card:active { transform: translateY(-2px); }
+        .service-card .card-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; margin-bottom: 16px; }
+        .card-icon.icon-emby { background: rgba(82,178,109,0.15); color: #52b26d; }
+        .card-icon.icon-file { background: rgba(116,192,252,0.15); color: #74c0fc; }
+        .card-icon.icon-frp { background: rgba(255,169,77,0.15); color: #ffa94d; }
+        .card-icon.icon-docker { background: rgba(0,153,238,0.15); color: #099cec; }
+        .card-icon.icon-download { background: rgba(255,107,107,0.15); color: #ff6b6b; }
+        .card-icon.icon-note { background: rgba(255,201,60,0.15); color: #ffc93c; }
+        .card-icon.icon-cloud { background: rgba(130,170,255,0.15); color: #82aaff; }
+        .service-card h3 { font-size: 18px; font-weight: 500; margin-bottom: 6px; }
+        .service-card .card-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 16px; line-height: 1.4; }
+        .service-card .card-footer { display: flex; justify-content: space-between; align-items: center; }
+        .service-card .status-badge { font-size: 12px; padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px; }
+        .status-badge.online { background: rgba(0,212,170,0.12); color: var(--accent-2); }
+        .service-card .status-badge i { font-size: 8px; }
+        .service-card .card-link-hint { font-size: 12px; color: var(--text-secondary); opacity: 0.6; }
+        .quick-actions { max-width: 1200px; margin: 0 auto; padding: 0 24px 60px; }
+        .quick-actions-grid { display: flex; flex-wrap: wrap; gap: 12px; }
+        .quick-action-btn {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 10px 20px; background: var(--glass-bg);
+            border: 1px solid var(--glass-border); border-radius: 50px;
+            color: var(--text-primary); font-size: 14px; font-family: inherit;
+            cursor: pointer; transition: all 0.3s ease; text-decoration: none;
+        }
+        .quick-action-btn:hover { background: var(--bg-card); border-color: var(--accent-1); transform: translateY(-2px); }
+        footer { text-align: center; padding: 30px 20px; border-top: 1px solid var(--glass-border); color: var(--text-secondary); font-size: 13px; }
+        @media (max-width: 768px) {
+            header { padding: 16px 20px; flex-direction: column; gap: 8px; }
+            .header-right { width: 100%; justify-content: center; }
+            .hero h1 { font-size: 32px; }
+            .hero p { font-size: 16px; }
+            .services-grid { grid-template-columns: 1fr; padding: 0 16px 30px; gap: 14px; }
+            .section-title { padding: 0 16px; }
+            .quick-actions { padding: 0 16px 40px; }
+        }
+    .family-section { max-width: 1200px; margin: 0 auto; padding: 0 24px 60px; }
+.family-panel {            background: var(--glass-bg);            backdrop-filter: blur(10px);            border: 1px solid var(--glass-border);            border-radius: 16px;            padding: 36px 28px 42px;            position: relative;            overflow: hidden;        }
+.family-panel::before {            content: "";            position: absolute;            top: 0; left: 0;            width: 100%; height: 3px;            background: linear-gradient(90deg, var(--accent-1), var(--accent-2), var(--accent-3));        }
+.family-intro { text-align: center; margin-bottom: 32px; }
+.family-intro h3 {            font-size: 22px; font-weight: 500; margin-bottom: 10px;            background: linear-gradient(135deg, #fff, var(--accent-5));            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;        }
+.family-intro p { font-size: 14px; color: var(--text-secondary); line-height: 1.7; max-width: 600px; margin: 0 auto; }
+.family-tree { max-width: 860px; margin: 0 auto; }
+.tree-top {            display: grid;            grid-template-columns: 1fr 1fr;            gap: 60px;            align-items: start;        }
+.tree-column { display: flex; flex-direction: column; align-items: center; }
+.couple-group { display: flex; align-items: center; gap: 12px; }
+.couple-heart {            width: 28px; height: 28px;            border-radius: 50%;            background: rgba(255, 107, 107, 0.12);            color: var(--accent-3);            display: flex; align-items: center; justify-content: center;            flex-shrink: 0;            font-size: 12px;        }
+.branch-line {            width: 2px; height: 28px;            background: var(--line-color);            margin: 10px 0;        }
+.member-card {            position: relative;            background: var(--bg-card);            border: 1px solid var(--glass-border);            border-radius: 14px;            min-width: 130px;            padding: 16px 14px;            text-align: center;            transition: all 0.3s ease;        }
+.member-card:hover {            transform: translateY(-4px);            border-color: rgba(108, 99, 255, 0.4);            box-shadow: var(--shadow);        }
+.member-avatar {
+            width: 80px; height: 80px;
+            border-radius: 12px;
+            margin: 0 auto 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+        }
+.member-avatar img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            border-radius: 10px;
+        }
+.avatar-elder-m { background: rgba(116, 192, 252, 0.15); color: var(--accent-5); }
+.avatar-elder-f { background: rgba(255, 107, 107, 0.15); color: var(--accent-3); }
+.avatar-dad     { background: rgba(108, 99, 255, 0.15);  color: var(--accent-1); }
+.avatar-mom     { background: rgba(255, 169, 77, 0.15);  color: var(--accent-4); }
+.avatar-me      { background: rgba(0, 212, 170, 0.18);   color: var(--accent-2); }
+.member-name { font-size: 15px; font-weight: 500; color: var(--text-primary); margin-bottom: 4px; }
+.member-role {            font-size: 11px; color: var(--text-secondary);            background: rgba(255, 255, 255, 0.04);            border: 1px solid var(--glass-border);            display: inline-block;            padding: 2px 9px;            border-radius: 999px;        }
+.parent-card::after {            content: "";            position: absolute;            left: 50%; bottom: -22px;            transform: translateX(-50%);            width: 2px; height: 22px;            background: var(--line-color);        }
+.parents-link {            width: min(420px, 78%);            height: 46px;            margin: 0 auto;            position: relative;        }
+.parents-link::before {            content: "";            position: absolute;            top: 22px; left: 0; right: 0;            height: 2px;            background: var(--line-color);        }
+.parents-link::after {            content: "";            position: absolute;            left: 50%; top: 22px;            transform: translateX(-50%);            width: 2px; height: 46px;            background: var(--line-color);        }
+.parents-link .link-heart {            position: absolute;            left: 50%; top: 8px;            transform: translateX(-50%);            width: 28px; height: 28px;            border-radius: 50%;            background: var(--bg-card);            border: 1px solid var(--glass-border);            color: var(--accent-3);            display: flex; align-items: center; justify-content: center;            z-index: 1;            font-size: 12px;        }
+.tree-bottom { margin-top: 46px; display: flex; justify-content: center; }
+.member-card.me {            min-width: 150px;            border-color: rgba(0, 212, 170, 0.4);            background: linear-gradient(135deg, rgba(0, 212, 170, 0.08), rgba(108, 99, 255, 0.08));        }
+.member-card.me .member-name { color: var(--accent-2); font-size: 16px; }
+@media (max-width: 520px) {            .tree-top { gap: 10px; }            .member-card { min-width: 80px; min-height: 130px; }
+    </style>
+</head>
+<body>
+<div class="bg-animation"><div class="orb"></div><div class="orb"></div><div class="orb"></div></div>
+
+<header>
+    <div class="logo">🏠 主页</div>
+    <div class="header-right">
+        <span class="datetime" id="datetimeDisplay"></span>
+    </div>
+</header>
+
+<section class="hero">
+    <h1>欢迎回家 ✨</h1>
+    <p>个人服务导航 · 快速访问你的自托管服务</p>
+</section>
+
+<div class="search-container">
+    <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="搜索服务..." oninput="renderServices(this.value)">
+    </div>
+</div>
+
+<div class="section-title">
+<i class="fas fa-sitemap">
+</i> 家庭介绍</div>
+<section class="family-section">    <div class="family-panel">        <div class="family-intro">            <h3>我的一家</h3>            <p>上面是长辈的守护，中间是爸爸妈妈的陪伴，下面是小塔。家人的名字连在一起，就是一个家最柔软也最有力量的样子。</p>        </div>        <div class="family-tree">            <div class="tree-top">                <div class="tree-column">                    <div class="couple-group">                        <div class="member-card">            <div class="member-avatar avatar-elder-m"><img src=\"images/grandpa.jpg\" alt="爷爷"></div>
+            <div class="member-name">爷爷</div>                            <div class="member-role">慈爱长辈</div>                        </div>                        <div class="couple-heart">
+<i class="fas fa-heart">
+</i>
+</div>                        <div class="member-card">            <div class="member-avatar avatar-elder-f"><img src=\"images/grandma.jpg\" alt="奶奶"></div>
+            <div class="member-name">奶奶</div>                            <div class="member-role">温暖守护</div>                        </div>                    </div>                    <div class="branch-line">
+</div>                    <div class="member-card parent-card">            <div class="member-avatar avatar-dad"><img src=\"images/dad.jpg\" alt="爸爸"></div>
+            <div class="member-name">爸爸</div>                        <div class="member-role">家庭依靠</div>                    </div>                </div>                <div class="tree-column">                    <div class="couple-group">                        <div class="member-card">            <div class="member-avatar avatar-elder-m"><img src=\"images/gonggong.jpg\" alt="公公"></div>
+            <div class="member-name">公公</div>                            <div class="member-role">慈祥长辈</div>                        </div>                        <div class="couple-heart">
+<i class="fas fa-heart">
+</i>
+</div>                        <div class="member-card">            <div class="member-avatar avatar-elder-f"><img src=\"images/apo.jpg\" alt="阿婆"></div>
+            <div class="member-name">阿婆</div>                            <div class="member-role">温柔长辈</div>                        </div>                    </div>                    <div class="branch-line">
+</div>                    <div class="member-card parent-card">            <div class="member-avatar avatar-mom"><img src=\"images/mom.jpg\" alt="妈妈"></div>
+            <div class="member-name">妈妈</div>                        <div class="member-role">家的温度</div>                    </div>                </div>            </div>            <div class="parents-link">                <div class="link-heart">
+<i class="fas fa-heart">
+</i>
+</div>            </div>            <div class="tree-bottom">                <div class="member-card me">            <div class="member-avatar avatar-me"><img src=\"images/me.jpg\" alt="小塔"></div>
+            <div class="member-name">小塔</div>                    <div class="member-role">被爱包围的我</div>                </div>            </div>        </div>    </div>
+</section>
+<div class="section-title"><i class="fas fa-server"></i> 我的服务</div>
+<div class="services-grid" id="servicesGrid"></div>
+
+<div class="section-title"><i class="fas fa-link"></i> 快捷链接</div>
+<div class="quick-actions">
+    <div class="quick-actions-grid" id="quickLinks"></div>
+</div>
+
+<footer>
+    <p>❤️ 自托管 · <span id="footerYear"></span> · <span id="dataSource" style="font-size:12px;opacity:0.5;"></span></p>
+</footer>
+
+<script>
+// ========== 内置兜底数据（离线 / file:// 模式）==========
+var DEFAULT_SERVICES = [
+    { name: "Emby",             url: "http://47.116.143.186:18096",                    icon: "fas fa-play",         iconClass: "icon-emby",    desc: "家庭媒体中心 · 电影 / 剧集 / 音乐" },
+    { name: "FRP 控制面板",     url: "http://47.116.143.186:7500/",                    icon: "fas fa-network-wired",iconClass: "icon-frp",     desc: "内网穿透 · 隧道状态 / 流量监控" },
+    { name: "NAS 管理",         url: "http://47.116.143.186:19999/",                   icon: "fas fa-hdd",          iconClass: "icon-cloud",  desc: "DSM · 存储 / 下载 / 备份管理" },
+    { name: "WebDAV 文件服务",  url: "http://47.116.143.186:15005/dav/leo/",             icon: "fas fa-folder-open",  iconClass: "icon-file",   desc: "NAS WebDAV · 文件管理（仅内网）" },
+    { name: "小游戏",           url: "http://47.116.143.186:18080/game/index.html",icon: "fas fa-gamepad",      iconClass: "icon-note",   desc: "迷宫小游戏 · 放松一下" }
+];
+
+var services = [];
+
+// ========== 加载服务数据 ==========
+function loadServices() {
+    // file:// 协议下无法发请求，直接用兜底
+    if (location.protocol === 'file:') {
+        services = DEFAULT_SERVICES.slice();
+        document.getElementById('dataSource').textContent = '默认配置（未加载 services.json）';
+        renderServices();
+        return;
+    }
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', 'services.json?_=' + Date.now(), true);
+    xhr.onload = function() {
+        if (xhr.status >= 200 && xhr.status < 400) {
+            try { services = JSON.parse(xhr.responseText); }
+            catch(e) { services = DEFAULT_SERVICES.slice(); }
+        } else {
+            services = DEFAULT_SERVICES.slice();
+        }
+        renderServices();
+        document.getElementById('dataSource').textContent = 'services.json';
+    };
+    xhr.onerror = function() {
+        services = DEFAULT_SERVICES.slice();
+        renderServices();
+        document.getElementById('dataSource').textContent = 'services.json';
+    };
+    xhr.send();
+}
+
+// ========== 渲染服务卡片 ==========
+function renderServices(filter) {
+    var grid = document.getElementById('servicesGrid');
+    var kw = (filter || '').toLowerCase().trim();
+    var list = kw
+        ? services.filter(function(s){ return s.name.toLowerCase().indexOf(kw) !== -1 || s.desc.toLowerCase().indexOf(kw) !== -1; })
+        : services;
+    if (list.length === 0) {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-secondary);">没有匹配的服务</div>';
+        return;
+    }
+    var html = '';
+    for (var i = 0; i < list.length; i++) {
+        var s = list[i];
+        var ic = s.iconClass || 'icon-default';
+        html += '<div class="service-card" onclick="window.open(\'' + s.url + '\',\'_blank\')" title="打开 ' + s.name + '">' +
+            '<div class="card-icon ' + ic + '"><i class="' + s.icon + '"></i></div>' +
+            '<h3>' + escHtml(s.name) + '</h3>' +
+            '<div class="card-desc">' + escHtml(s.desc) + '</div>' +
+            '<div class="card-footer">' +
+                '<span class="status-badge online"><i class="fas fa-circle"></i> 在线</span>' +
+                '<span class="card-link-hint"><i class="fas fa-external-link-alt"></i> 打开</span>' +
+            '</div></div>';
+    }
+    grid.innerHTML = html;
+}
+
+function escHtml(t) {
+    var d = document.createElement('div');
+    d.textContent = t;
+    return d.innerHTML;
+}
+
+// ========== 快捷链接 ==========
+function renderQuickLinks() {
+    var links = [
+        { name: 'GitHub', url: 'https://github.com', icon: 'fab fa-github' },
+        { name: 'Google', url: 'https://google.com', icon: 'fab fa-google' },
+        { name: 'Bing',  url: 'https://bing.com',   icon: 'fab fa-microsoft' }
+    ];
+    var html = '';
+    for (var i = 0; i < links.length; i++) {
+        html += '<a href="' + links[i].url + '" target="_blank" class="quick-action-btn"><i class="' + links[i].icon + '"></i> ' + links[i].name + '</a>';
+    }
+    document.getElementById('quickLinks').innerHTML = html;
+}
+
+// ========== 时钟 ==========
+function updateClock() {
+    document.getElementById('datetimeDisplay').textContent =
+        new Date().toLocaleString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Shanghai' });
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+document.getElementById('footerYear').textContent = new Date().getFullYear();
+renderQuickLinks();
+loadServices();
+</script>
+</body>
+</html>
+

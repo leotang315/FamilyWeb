@@ -1,0 +1,33 @@
+﻿[
+  {
+    "name": "Emby",
+    "url": "http://47.116.143.186:18096",
+    "icon": "fas fa-play",
+    "iconClass": "icon-emby",
+    "desc": "家庭媒体中心 · 电影 / 剧集 / 音乐"
+  },
+  {
+    "name": "FRP 控制面板",
+    "url": "http://47.116.143.186:7500/",
+    "icon": "fas fa-network-wired",
+    "iconClass": "icon-frp",
+    "desc": "内网穿透 · 隧道状态 / 流量监控"
+  },
+  {
+    "name": "NAS 管理",
+    "url": "http://47.116.143.186:19999/",
+    "icon": "fas fa-hdd",
+    "iconClass": "icon-cloud",
+    "desc": "DSM · 存储 / 下载 / 备份管理"
+  },
+  {
+    "name": "WebDAV 文件服务",
+    "url": "http://192.168.2.101:5005/dav/leo/",
+    "icon": "fas fa-folder-open",
+    "iconClass": "icon-file",
+    "desc": "NAS WebDAV · 文件管理（仅内网）"
+  },
+
+  
+]
+

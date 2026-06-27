@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>小塔小游戏 - 迷宫收集</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Comic Sans MS','Chalkboard SE',sans-serif;background:linear-gradient(135deg,#a8dadc,#83c5be);min-height:100vh;display:flex;justify-content:center;align-items:center;overflow:hidden;user-select:none}
+#app{width:100%;max-width:780px;padding:12px;position:relative}
+.page{display:none;flex-direction:column;align-items:center}
+.page.active{display:flex}
+.game-header{text-align:center;margin-bottom:10px;width:100%}
+.game-header h1{font-size:clamp(22px,5vw,36px);color:#2d5016;text-shadow:2px 2px 0 #b5d99c;letter-spacing:2px}
+.game-header .subtitle{font-size:clamp(12px,2.5vw,16px);color:#4a7c2e}
+#charSelect .char-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0;width:100%;max-width:520px}
+.char-card{background:#fff;border-radius:20px;padding:12px 8px 10px;cursor:pointer;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.15);transition:all .2s;border:3px solid transparent}
+.char-card:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,.2)}
+.char-card.selected{border-color:#ff6b35;background:#fff5ee}
+.char-card.key-focus{box-shadow:0 0 0 3px #ff6b35, 0 6px 20px rgba(0,0,0,.2);transform:translateY(-3px)}
+.char-card .char-preview{width:64px;height:64px;margin:0 auto 6px;border-radius:50%;background:#f0ebe3;display:flex;align-items:center;justify-content:center;font-size:36px;overflow:hidden}
+.char-card .char-preview img{width:100%;height:100%;object-fit:cover}
+.char-card .char-name{font-size:13px;color:#5a3e1b;font-weight:bold}
+#gameUI .info-bar{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:700px;background:rgba(255,255,255,.85);border-radius:16px;padding:8px 16px;margin-bottom:8px;box-shadow:0 2px 8px rgba(0,0,0,.1);flex-wrap:wrap;gap:6px}
+.info-bar .info-item{display:flex;align-items:center;gap:5px;font-size:clamp(13px,2.5vw,16px);color:#5a3e1b;font-weight:bold}
+.info-bar button{background:#ff6b35;color:#fff;border:none;border-radius:12px;padding:6px 16px;font-size:14px;font-weight:bold;cursor:pointer;box-shadow:0 3px 0 #c44a1e;font-family:inherit}
+.info-bar button:active{transform:translateY(2px);box-shadow:0 1px 0 #c44a1e}
+.maze-wrapper{
+  position:relative;width:100%;max-width:700px;aspect-ratio:1;
+  background:
+    repeating-linear-gradient(105deg, rgba(255,255,255,0.08) 0 2px, transparent 2px 14px),
+    repeating-linear-gradient(85deg, rgba(0,0,0,0.10) 0 1px, transparent 1px 9px),
+    linear-gradient(135deg,#a0673f,#8b5a2b 50%,#6b4423);
+  border-radius:20px;
+  box-shadow:
+    inset 0 0 0 4px #5c3a1e,
+    inset 0 0 0 14px #8b5a2b,
+    0 8px 28px rgba(0,0,0,.3);
+  overflow:hidden;touch-action:none;padding:14px
+}
+#mazeCanvas{display:block;width:100%;height:100%;image-rendering:auto;border-radius:6px}
+.dpad{display:none;grid-template:repeat(3,1fr)/repeat(3,1fr);gap:8px;width:200px;height:200px;margin:10px auto 0}
+.dpad.visible{display:grid}
+.dpad-btn{background:rgba(255,255,255,.9);border:none;border-radius:16px;font-size:32px;cursor:pointer;box-shadow:0 3px 8px rgba(0,0,0,.15),inset 0 2px 0 rgba(255,255,255,.8);color:#5a3e1b;touch-action:manipulation}
+.dpad-btn:active{transform:scale(.92);background:#ffdab9}
+.dpad-center{background:transparent!important;box-shadow:none!important;cursor:default}
+#winOverlay,#gameOverOverlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:100}
+#winOverlay.show,#gameOverOverlay.show{display:flex}
+.win-card{background:#fff;border-radius:32px;padding:32px 28px 24px;text-align:center;max-width:400px;width:90%;box-shadow:0 12px 48px rgba(0,0,0,.3);animation:popIn .4s cubic-bezier(.175,.885,.32,1.275)}
+@keyframes popIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+.win-card .big-emoji{font-size:72px;margin-bottom:8px}
+.win-card h2{font-size:28px;color:#5a3e1b;margin-bottom:4px}
+.win-card p{color:#8b6b3d;font-size:16px;margin-bottom:6px}
+.win-card .star-bar{font-size:32px;margin:6px 0;letter-spacing:4px}
+.win-card .stat-line{color:#8b6b3d;font-size:14px;margin-bottom:12px}
+.win-card .level-preview{background:#fff5ee;border-radius:12px;padding:8px;margin:8px 0;font-size:14px;color:#5a3e1b}
+.win-card .btn-group{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.win-card button{padding:10px 24px;border:none;border-radius:14px;font-size:16px;font-weight:bold;cursor:pointer;font-family:inherit;box-shadow:0 3px 0 rgba(0,0,0,.15)}
+.win-card button:active{transform:translateY(2px)}
+.win-card .btn-again{background:#ff6b35;color:#fff}
+.win-card .btn-home{background:#ddd;color:#5a3e1b}
+.win-card .btn-retry{background:#4CAF50;color:#fff}
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.75);color:#fff;padding:10px 24px;border-radius:16px;font-size:18px;z-index:99;opacity:0;transition:opacity .3s;pointer-events:none;text-align:center;max-width:90vw}
+.toast.show{opacity:1}
+@keyframes hitFlash{0%{box-shadow:inset 0 0 0 4px #5c3a1e,inset 0 0 0 14px #8b5a2b,0 8px 28px rgba(0,0,0,.3)}50%{box-shadow:inset 0 0 0 4px #ff3030,inset 0 0 0 14px #ff6666,0 8px 28px rgba(255,0,0,.5)}100%{box-shadow:inset 0 0 0 4px #5c3a1e,inset 0 0 0 14px #8b5a2b,0 8px 28px rgba(0,0,0,.3)}}
+.maze-wrapper.hit{animation:hitFlash .4s}
+@media(pointer:coarse){.dpad.visible{display:grid}}
+</style>
+</head>
+<body>
+<div id="app">
+<div id="charSelect" class="page active">
+<div class="game-header"><h1>⭐ 小塔迷宫大冒险 ⭐</h1><div class="subtitle">选择你的角色，收集所有水果吧！</div></div>
+<div class="char-grid" id="charGrid"></div>
+<button onclick="startGame()" style="background:#ff6b35;color:#fff;border:none;border-radius:20px;padding:14px 48px;font-size:20px;font-weight:bold;cursor:pointer;box-shadow:0 4px 0 #c44a1e;font-family:inherit;margin-top:4px">开始游戏 🎮</button>
+</div>
+<div id="gameUI" class="page">
+<div class="info-bar">
+<div class="info-item"><span class="emoji-badge" id="charEmojiDisplay">🐰</span><span id="charNameDisplay">小塔</span></div>
+<div class="info-item"><span>🍓</span> <span id="fruitCount">0/0</span></div>
+<div class="info-item"><span>⏱️</span> <span id="timerDisplay">0s</span></div>
+<div class="info-item"><span id="hpDisplay">❤️❤️❤️</span></div>
+<div class="info-item" id="levelDisplay" style="background:#ff6b35;color:#fff;border-radius:8px;padding:2px 10px">第1关</div>
+<button onclick="goHome()">🏠 主页</button></div>
+<div class="maze-wrapper" id="mazeWrapper"><canvas id="mazeCanvas"></canvas></div>
+<div class="dpad" id="dpad">
+<div></div><button class="dpad-btn" data-dir="up">▲</button><div></div>
+<button class="dpad-btn" data-dir="left">◀</button><div class="dpad-center"></div><button class="dpad-btn" data-dir="right">▶</button>
+<div></div><button class="dpad-btn" data-dir="down">▼</button><div></div>
+</div></div></div>
+
+<div id="winOverlay"><div class="win-card">
+<div class="big-emoji">🎉</div><h2>太棒啦！</h2><p>你收集了所有水果！</p>
+<div class="star-bar" id="starBar">⭐⭐⭐</div>
+<div class="stat-line" id="statLine">用时：0s</div>
+<div class="level-preview" id="levelPreview"></div>
+<div class="btn-group">
+<button class="btn-again" onclick="nextLevel()">下一关 ▶</button>
+<button class="btn-home" onclick="goHome()">选择角色 🏠</button>
+</div></div></div>
+
+<div id="gameOverOverlay"><div class="win-card">
+<div class="big-emoji">💥</div><h2 style="color:#d32f2f">游戏结束</h2><p>被小怪物抓住啦！</p>
+<div class="stat-line" id="overStatLine">用时：0s ｜ 已收集：0</div>
+<div class="btn-group">
+<button class="btn-retry" onclick="retryLevel()">重试本关 🔄</button>
+<button class="btn-home" onclick="goHome()">选择角色 🏠</button>
+</div></div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== 角色配置 =====
+var CHARS = [
+  {id:"a", nm:"beta", em:"🐰", co:"#FFB7C5", img:"role/beta2.JPG"},
+  {id:"b", nm:"dad",  em:"🦊", co:"#FFD700", img:"role/dad.JPG"},
+  {id:"c", nm:"mum", em:"👩", co:"#FF69B4", img:"role/mum.JPG"},
+  {id:"i", nm:"Duggee", em:"🐶", co:"#FFB347", img:"role/duggee.png"},
+  {id:"j", nm:"Betty", em:"🐙", co:"#FF69B4", img:"role/betty.png"},
+  {id:"k", nm:"Happy", em:"🐸", co:"#90EE90", img:"role/happy.png"},
+  {id:"l", nm:"Norrie", em:"🐭", co:"#87CEEB", img:"role/norrie.png"},
+  {id:"m", nm:"Roly", em:"🐹", co:"#DDA0DD", img:"role/roly.png"},
+  {id:"n", nm:"Tag", em:"🦏", co:"#FFD700", img:"role/tag.png"}
+];
+var FRUITS = ["\u{1F353}","\u{1F34E}","\u{1F34A}","\u{1F347}","\u{1F34C}","\u{1F351}","\u{1F352}","\u{1F350}","\u{1F95B}","\u{1F34B}"];
+
+// ===== 怪物种类（速度保持原版） =====
+var ENEMY_TYPES = {
+  patrol: {emoji:"👾", name:"巡逻怪", chaseChance:0.15, speed:1.0},
+  chase:  {emoji:"👻", name:"追踪鬼", chaseChance:0.55, speed:1.0},
+  demon:  {emoji:"👹", name:"闪电恶魔", chaseChance:0.7, speed:1.0}
+};
+
+function getEnemyConfig(lv){
+  switch(lv){
+    case 1: return [{type:"patrol",count:1}];
+    case 2: return [{type:"patrol",count:2}];
+    case 3: return [{type:"patrol",count:2},{type:"chase",count:1}];
+    case 4: return [{type:"patrol",count:2},{type:"chase",count:2}];
+    case 5: return [{type:"patrol",count:1},{type:"chase",count:2},{type:"demon",count:1}];
+    default: return [{type:"patrol",count:1+lv},{type:"chase",count:Math.floor(lv/2)}];
+  }
+}
+function getLevelDescription(lv){
+  var cfg = getEnemyConfig(lv);
+  var parts = [];
+  for(var i=0;i<cfg.length;i++){
+    parts.push(cfg[i].count + "×" + ENEMY_TYPES[cfg[i].type].emoji);
+  }
+  return parts.join(" + ");
+}
+
+// ===== 音效 =====
+var audioCtx = null;
+var audioReady = false;
+function initAudio(){
+  if(audioReady) return;
+  try{
+    if(!audioCtx){ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    if(audioCtx.state === "suspended"){
+      audioCtx.resume().then(function(){ audioReady = true; });
+    } else { audioReady = true; }
+  }catch(e){}
+}
+function playTone(freq, duration, type, vol){
+  if(!audioCtx){ initAudio(); }
+  if(!audioCtx) return;
+  try{
+    var osc = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+    osc.type = type || "sine";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol || 0.15, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + duration);
+  }catch(e){}
+}
+function playMove(){playTone(200,0.08,"triangle",1)}
+function playCollect(){
+  playTone(660,0.08,"sine",1);
+  setTimeout(function(){playTone(880,0.1,"sine",0.12)},60);
+  setTimeout(function(){playTone(1100,0.15,"sine",0.12)},120);
+}
+function playWin(){
+  var notes=[523,659,784,1047,784,1047,1319];
+  for(var i=0;i<notes.length;i++){
+    (function(n,d){setTimeout(function(){playTone(n,0.2,"sine",1)},d)})(notes[i],i*120);
+  }
+}
+function playSelect(){playTone(440,0.06,"sine",1);setTimeout(function(){playTone(660,0.08,"sine",1)},50)}
+function playBump(){playTone(100,0.1,"square",1)}
+function playHurt(){
+  playTone(180,0.15,"sawtooth",1);
+  setTimeout(function(){playTone(120,0.25,"sawtooth",0.18)},80);
+}
+function playExplode(){
+  playTone(80,0.4,"sawtooth",1);
+  setTimeout(function(){playTone(50,0.5,"sawtooth",0.2)},100);
+  setTimeout(function(){playTone(40,0.6,"square",0.18)},250);
+}
+function unlockAudio(){
+  initAudio();
+  if(audioCtx && audioCtx.state === "suspended"){ audioCtx.resume(); }
+}
+document.addEventListener("click", unlockAudio, {once:false});
+document.addEventListener("touchstart", unlockAudio, {once:false});
+document.addEventListener("keydown", unlockAudio, {once:false});
+
+// ===== 状态 =====
+var imgCache = {};
+var level = 1;
+var maxLevel = 5;
+function getMazeSize(){return 7+level}
+function getFruitCount(){return 3+level}
+function getLevelLabel(){return '第'+level+'关'}
+
+var COLS, ROWS;
+var sel=null, maze=null, pos={r:1,c:1}, fruits=[], got=0, total=0, timer=null, sec=0, running=false;
+var enemies = [];
+
+// 战斗系统
+var stunned = false;
+var stunTimer = 0;
+var hp = 3;
+var maxHp = 3;
+var invincible = 0;
+var INVINCIBLE_TICKS = 30;   // 约 1.5 秒无敌
+var STUN_TICKS = 8;
+
+// 爆炸动画
+var exploding = false;
+var explodeTimer = 0;
+var explodeMaxTime = 60;
+
+// 草地装饰
+var grassDecor = [];
+
+var cv=document.getElementById("mazeCanvas"), cx=cv.getContext("2d");
+
+function getPlayerChar(){
+  var ch = sel;
+  if(!ch) return "\u{1F430}";
+  if(ch.img && imgCache[ch.id]) return imgCache[ch.id];
+  return ch.em;
+}
+
+// ===== 迷宫生成 =====
+function genMaze(w,h){
+  var g=[];
+  for(var r=0;r<h;r++){g[r]=[];for(var c=0;c<w;c++)g[r][c]={r:r,c:c,w:[1,1,1,1],v:false}}
+  var s=g[1][1]; s.v=true;
+  var q=[];
+  function addW(cell){
+    var a=cell.r,b=cell.c;
+    if(a>1) q.push({r:a-1,c:b,d:0,f:cell});
+    if(a<h-2) q.push({r:a+1,c:b,d:2,f:cell});
+    if(b>1) q.push({r:a,c:b-1,d:3,f:cell});
+    if(b<w-2) q.push({r:a,c:b+1,d:1,f:cell});
+  }
+  addW(s);
+  while(q.length){
+    var i=Math.floor(Math.random()*q.length), x=q[i]; q.splice(i,1);
+    var t=g[x.r][x.c]; if(t.v) continue;
+    t.v=true; var u=x.f,d=x.d,o=(d+2)%4;
+    u.w[d]=false; t.w[o]=false; addW(t);
+  }
+  return g;
+}
+
+function placeFruits(g,n){
+  var c=[];
+  for(var r=1;r<g.length-1;r++) for(var c2=1;c2<g[0].length-1;c2++){
+    if(r==1&&c2==1||r==g.length-2&&c2==g[0].length-2) continue;
+    c.push({r:r,c:c2});
+  }
+  for(var i=c.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=c[i];c[i]=c[j];c[j]=t}
+  var p=[];
+  for(var i=0;i<Math.min(n,c.length);i++) p.push({r:c[i].r,c:c[i].c,t:FRUITS[i%FRUITS.length]});
+  return p;
+}
+
+function generateGrassDecor(){
+  grassDecor = [];
+  for(var r=0;r<ROWS;r++){
+    for(var c=0;c<COLS;c++){
+      var n = 3 + Math.floor(Math.random()*4);
+      for(var i=0;i<n;i++){
+        grassDecor.push({
+          r:r, c:c,
+          x:Math.random(),
+          y:Math.random(),
+          type:Math.random()<0.6?"dot":"blade",
+          rot:Math.random()*Math.PI*2,
+          size:0.5+Math.random()*0.5
+        });
+      }
+    }
+  }
+}
+
+// ===== 画布 =====
+function resizeCanvas(){
+  var s=cv.parentElement.clientWidth - 28; // 减去 padding
+  if(s<100) s=cv.parentElement.clientWidth;
+  cv.width=s*window.devicePixelRatio; cv.height=s*window.devicePixelRatio;
+  cv.style.width=s+"px"; cv.style.height=s+"px";
+  cx.setTransform(1,0,0,1,0,0);
+  cx.scale(window.devicePixelRatio,window.devicePixelRatio);
+}
+
+function drawMaze(){
+  var w=cv.width/window.devicePixelRatio, h=cv.height/window.devicePixelRatio;
+  var cw=w/COLS, ch=h/ROWS;
+  var wallTh = Math.max(4, Math.min(cw,ch)*0.38);
+
+  // 1. 浅绿草地底色
+  cx.fillStyle = "#a8d96b";
+  cx.fillRect(0,0,w,h);
+
+  // 2. 深绿墙体（草丛）
+  cx.fillStyle = "#3d8b3d";
+  for(var r=0;r<ROWS;r++){
+    for(var c=0;c<COLS;c++){
+      var cell = maze[r][c];
+      if(!cell) continue;
+      var x=c*cw, y=r*ch;
+      if(cell.w[0]) cx.fillRect(x - wallTh/2, y - wallTh/2, cw + wallTh, wallTh);
+      if(cell.w[2]) cx.fillRect(x - wallTh/2, y + ch - wallTh/2, cw + wallTh, wallTh);
+      if(cell.w[3]) cx.fillRect(x - wallTh/2, y - wallTh/2, wallTh, ch + wallTh);
+      if(cell.w[1]) cx.fillRect(x + cw - wallTh/2, y - wallTh/2, wallTh, ch + wallTh);
+    }
+  }
+
+  // 3. 草丛纹理
+  for(var i=0;i<grassDecor.length;i++){
+    var d = grassDecor[i];
+    var px = d.c*cw + d.x*cw;
+    var py = d.r*ch + d.y*ch;
+    var localX = d.x*cw, localY = d.y*ch;
+    var onWall = false;
+    var cell = maze[d.r] && maze[d.r][d.c];
+    if(cell){
+      if(cell.w[0] && localY < wallTh/2) onWall = true;
+      if(cell.w[2] && localY > ch - wallTh/2) onWall = true;
+      if(cell.w[3] && localX < wallTh/2) onWall = true;
+      if(cell.w[1] && localX > cw - wallTh/2) onWall = true;
+    }
+    if(onWall){
+      if(d.type==="dot"){
+        cx.fillStyle = "rgba(255,255,255,0.55)";
+        cx.beginPath();
+        cx.arc(px,py, Math.max(0.8, cw*0.025*d.size), 0, Math.PI*2);
+        cx.fill();
+      } else {
+        cx.strokeStyle = "rgba(40,80,30,0.55)";
+        cx.lineWidth = Math.max(1, cw*0.04);
+        cx.lineCap="round";
+        var len = cw*0.18*d.size;
+        cx.beginPath();
+        cx.moveTo(px - Math.cos(d.rot)*len/2, py - Math.sin(d.rot)*len/2);
+        cx.lineTo(px + Math.cos(d.rot)*len/2, py + Math.sin(d.rot)*len/2);
+        cx.stroke();
+      }
+    } else {
+      if(d.type==="dot" && Math.random()<0.5){
+        cx.fillStyle = "rgba(255,255,255,0.4)";
+        cx.beginPath();
+        cx.arc(px,py, Math.max(0.6, cw*0.018*d.size), 0, Math.PI*2);
+        cx.fill();
+      }
+    }
+  }
+
+  // 4. 起点/终点高亮
+  cx.fillStyle = "rgba(255,255,255,0.3)";
+  cx.beginPath();
+  cx.arc(1*cw+cw/2, 1*ch+ch/2, Math.min(cw,ch)*0.35, 0, Math.PI*2);
+  cx.fill();
+  cx.fillStyle = "rgba(255,235,100,0.4)";
+  cx.beginPath();
+  cx.arc((COLS-2)*cw+cw/2, (ROWS-2)*ch+ch/2, Math.min(cw,ch)*0.35, 0, Math.PI*2);
+  cx.fill();
+
+  // 起点旗帜 + 终点
+  var sz=Math.min(cw,ch)*0.55;
+  cx.font=sz+"px sans-serif"; cx.textAlign="center"; cx.textBaseline="middle";
+  cx.fillText("\u{1F3C1}", 1*cw+cw/2, 1*ch+ch/2+1);
+  cx.fillText("\u{1F3AF}", (COLS-2)*cw+cw/2, (ROWS-2)*ch+ch/2+1);
+
+  // 5. 水果 - 加白色圆形背景 + 阴影，对比鲜明
+  for(var i=0;i<fruits.length;i++){
+    var fx = fruits[i].c*cw+cw/2;
+    var fy = fruits[i].r*ch+ch/2;
+    var fr = Math.min(cw,ch)*0.32;
+    // 阴影
+    cx.fillStyle = "rgba(0,0,0,0.22)";
+    cx.beginPath();
+    cx.ellipse(fx, fy+fr*0.85, fr*0.7, fr*0.22, 0,0,Math.PI*2);
+    cx.fill();
+    // 白色圆底
+    cx.beginPath();
+    cx.arc(fx, fy, fr, 0, Math.PI*2);
+    cx.fillStyle = "rgba(255,255,255,0.92)";
+    cx.fill();
+    cx.strokeStyle = "rgba(120,80,40,0.6)";
+    cx.lineWidth = 2;
+    cx.stroke();
+    // 水果 emoji
+    cx.font=(Math.min(cw,ch)*0.5)+"px sans-serif";
+    cx.fillText(fruits[i].t, fx, fy+1);
+  }
+
+  // 6. 怪物 - 加深色圆底 + 红/紫光环，对比鲜明
+  for(var i=0;i<enemies.length;i++){
+    var en = enemies[i];
+    var ex=en.c*cw+cw/2, ey=en.r*ch+ch/2;
+    var er = Math.min(cw,ch)*0.36;
+
+    // 光环（颜色按类型）
+    var glowColor;
+    if(en.type==="demon") glowColor = "rgba(255,40,40,0.45)";
+    else if(en.type==="chase") glowColor = "rgba(180,80,255,0.4)";
+    else glowColor = "rgba(80,80,200,0.35)";
+
+    cx.beginPath();
+    cx.arc(ex, ey, er*1.15, 0, Math.PI*2);
+    cx.fillStyle = glowColor;
+    cx.fill();
+
+    // 深色圆底（让 emoji 在浅绿背景上突出）
+    cx.beginPath();
+    cx.arc(ex, ey, er, 0, Math.PI*2);
+    cx.fillStyle = "rgba(40,20,60,0.85)";
+    cx.fill();
+    cx.strokeStyle = "rgba(255,255,255,0.8)";
+    cx.lineWidth = 2;
+    cx.stroke();
+
+    // 怪物 emoji
+    var es=Math.min(cw,ch)*(en.type==="demon" ? 0.6 : 0.55);
+    cx.font=es+'px sans-serif';
+    cx.fillText(ENEMY_TYPES[en.type].emoji, ex, ey+1);
+  }
+
+  // 7. 玩家
+  var px=pos.c*cw+cw/2, py=pos.r*ch+ch/2, s=Math.min(cw,ch)*0.78;
+
+  if(exploding){
+    var progress = 1 - explodeTimer/explodeMaxTime;
+    var scale = 1 + progress * 2;
+    var size = s * scale;
+    cx.globalAlpha = Math.max(0, 1 - progress);
+    cx.font = size + "px sans-serif";
+    cx.textAlign = "center"; cx.textBaseline = "middle";
+    cx.fillText("💥", px, py);
+    cx.globalAlpha = 1;
+    return;
+  }
+
+  // 无敌帧闪烁
+  if(invincible > 0 && Math.floor(invincible/3) % 2 === 0){
+    cx.beginPath();
+    cx.arc(px,py, s/2 + 4, 0, Math.PI*2);
+    cx.strokeStyle = "rgba(255,215,0,0.7)";
+    cx.lineWidth = 3;
+    cx.stroke();
+    return;
+  }
+
+  // 阴影
+  cx.beginPath(); cx.arc(px+2,py+3,s/2.2,0,Math.PI*2);
+  cx.fillStyle="rgba(0,0,0,0.22)"; cx.fill();
+
+  // 白色描边圆底 - 让玩家在草地上突出
+  cx.beginPath(); cx.arc(px,py,s/2.2 + 3,0,Math.PI*2);
+  cx.fillStyle = "rgba(255,255,255,0.85)"; cx.fill();
+
+  var g=cx.createRadialGradient(px-3,py-3,2,px,py,s/2);
+  g.addColorStop(0,"#fff"); g.addColorStop(1,sel?sel.co:"#FFB7C5");
+  cx.beginPath(); cx.arc(px,py,s/2.2,0,Math.PI*2);
+  cx.fillStyle=g; cx.fill();
+  cx.strokeStyle="rgba(0,0,0,0.3)"; cx.lineWidth=2; cx.stroke();
+
+  if(invincible > 0){
+    cx.beginPath();
+    cx.arc(px,py, s/2 + 4, 0, Math.PI*2);
+    cx.strokeStyle = "rgba(255,215,0,0.85)";
+    cx.lineWidth = 3;
+    cx.stroke();
+  }
+
+  var ch2 = getPlayerChar();
+  if(typeof ch2 === "object"){
+    cx.save();
+    cx.beginPath(); cx.arc(px,py,s/2.2,0,Math.PI*2); cx.clip();
+    cx.drawImage(ch2, px-s/2.2, py-s/2.2, s/1.1, s/1.1);
+    cx.restore();
+  } else {
+    cx.font=(s*0.9)+"px sans-serif";
+    cx.textAlign="center"; cx.textBaseline="middle";
+    cx.fillText(ch2, px, py+1);
+  }
+  if(stunned){
+    cx.font=(s*0.5)+"px sans-serif";
+    cx.fillText("💫", px, py - s/2);
+  }
+}
+
+// ===== 玩家移动 =====
+function canMove(r,c){
+  if(r<0||r>=ROWS||c<0||c>=COLS||!maze[r][c]) return false;
+  var dr=r-pos.r, dc=c-pos.c, cur=maze[pos.r][pos.c];
+  if(dr==-1&&dc==0) return !cur.w[0];
+  if(dr==1&&dc==0) return !cur.w[2];
+  if(dr==0&&dc==-1) return !cur.w[3];
+  if(dr==0&&dc==1) return !cur.w[1];
+  return false;
+}
+
+function move(dr,dc){
+  if(!running) return;
+  if(stunned){ playBump(); return; }
+  var nr=pos.r+dr, nc=pos.c+dc;
+  if(!canMove(nr,nc)){playBump();return}
+  pos.r=nr; pos.c=nc; playMove();
+  for(var i=0;i<fruits.length;i++){
+    if(fruits[i].r==nr&&fruits[i].c==nc){
+      var ft=fruits[i]; fruits.splice(i,1); got++;
+      updateUI(); playCollect(); toast("\u83B7\u5F97 "+ft.t+"\uFF01");
+      drawMaze();
+      if(got>=total) win();
+      return;
+    }
+  }
+  checkEnemyCollision();
+  if(nr==ROWS-2&&nc==COLS-2&&got>=total) win();
+  drawMaze();
+}
+
+// ===== 怪物 AI =====
+function moveOneEnemy(en){
+  var cell = maze[en.r][en.c];
+  var options = [];
+  if(!cell.w[0]) options.push({dr:-1,dc:0});
+  if(!cell.w[1]) options.push({dr:0,dc:1});
+  if(!cell.w[2]) options.push({dr:1,dc:0});
+  if(!cell.w[3]) options.push({dr:0,dc:-1});
+  if(options.length === 0) return;
+
+  var typeInfo = ENEMY_TYPES[en.type];
+  var chase = Math.random() < typeInfo.chaseChance;
+
+  if(chase){
+    var best = null, bestDist = 1e9;
+    for(var i=0;i<options.length;i++){
+      var nr = en.r+options[i].dr, nc = en.c+options[i].dc;
+      var d = Math.abs(nr-pos.r)+Math.abs(nc-pos.c);
+      if(d<bestDist){bestDist=d; best=options[i];}
+    }
+    en.r += best.dr; en.c += best.dc;
+  } else {
+    var noBack = options.filter(function(o){
+      return !(en.lastDr === -o.dr && en.lastDc === -o.dc);
+    });
+    var pick = (noBack.length ? noBack : options)[Math.floor(Math.random()*(noBack.length?noBack.length:options.length))];
+    en.r += pick.dr; en.c += pick.dc;
+    en.lastDr = pick.dr; en.lastDc = pick.dc;
+  }
+}
+
+function moveEnemies(){
+  for(var i=0;i<enemies.length;i++){
+    moveOneEnemy(enemies[i]);
+    if(checkEnemyCollision()) return;
+  }
+}
+
+// ===== 碰撞 + 无敌帧 =====
+function checkEnemyCollision(){
+  if(invincible > 0) return false;
+  if(exploding) return false;
+
+  for(var i=0;i<enemies.length;i++){
+    var en = enemies[i];
+    if(en.r === pos.r && en.c === pos.c){
+      hp--;
+      updateUI();
+      playHurt();
+      invincible = INVINCIBLE_TICKS;
+      stunned = true;
+      stunTimer = STUN_TICKS;
+      knockback(en);
+
+      var wrap = document.getElementById("mazeWrapper");
+      wrap.classList.remove("hit");
+      void wrap.offsetWidth;
+      wrap.classList.add("hit");
+
+      if(hp <= 0){
+        triggerExplode();
+        return true;
+      } else {
+        toast("\u54CE\u54DF\uFF01\u5269\u4F59 "+hp+" \u8840 \uD83D\uDC94");
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
+function knockback(en){
+  var dirs = [
+    {dr:-1,dc:0,wIdx:0},
+    {dr:1,dc:0,wIdx:2},
+    {dr:0,dc:-1,wIdx:3},
+    {dr:0,dc:1,wIdx:1}
+  ];
+  var cur = maze[pos.r][pos.c];
+  var best = null, bestScore = -1e9;
+  for(var i=0;i<dirs.length;i++){
+    var d = dirs[i];
+    if(cur.w[d.wIdx]) continue;
+    var nr = pos.r+d.dr, nc = pos.c+d.dc;
+    if(nr<0||nr>=ROWS||nc<0||nc>=COLS) continue;
+    var blocked = false;
+    for(var j=0;j<enemies.length;j++){
+      if(enemies[j].r===nr && enemies[j].c===nc){ blocked=true; break; }
+    }
+    if(blocked) continue;
+    var score = 0;
+    for(var j=0;j<enemies.length;j++){
+      score += Math.abs(nr-enemies[j].r)+Math.abs(nc-enemies[j].c);
+    }
+    if(score>bestScore){bestScore=score; best=d;}
+  }
+  if(best){
+    pos.r += best.dr;
+    pos.c += best.dc;
+  }
+}
+
+function triggerExplode(){
+  exploding = true;
+  explodeTimer = explodeMaxTime;
+  running = false;
+  playExplode();
+  setTimeout(function(){
+    exploding = false;
+    showGameOver();
+  }, 1000);
+}
+
+// ===== UI =====
+function updateUI(){
+  document.getElementById("fruitCount").textContent = got+"/"+total;
+  document.getElementById("timerDisplay").textContent = sec+"s";
+  document.getElementById("levelDisplay").textContent = getLevelLabel();
+  var hpStr = "";
+  for(var i=0;i<maxHp;i++){ hpStr += i<hp ? "\u2764\uFE0F" : "\u{1F5A4}"; }
+  document.getElementById("hpDisplay").textContent = hpStr;
+}
+
+function toast(msg){
+  var t=document.getElementById("toast");
+  t.textContent=msg; t.classList.add("show");
+  clearTimeout(t._tid);
+  t._tid=setTimeout(function(){t.classList.remove("show")},1200);
+}
+
+// ===== 游戏循环 =====
+// 怪物移动节奏：原版每 200ms 一次 → 这里 50ms tick × 4 = 200ms
+var loopId = null;
+function gameLoop(){
+  if(!running && !exploding){ return; }
+
+  if(exploding){
+    explodeTimer--;
+    drawMaze();
+    return;
+  }
+
+  if(invincible > 0) invincible--;
+  if(stunned){
+    stunTimer--;
+    if(stunTimer<=0) stunned=false;
+  }
+
+  gameLoop.tick = (gameLoop.tick||0) + 1;
+  if(gameLoop.tick % 20 === 0){
+    moveEnemies();
+  }
+
+  drawMaze();
+}
+
+function startGameLoop(){
+  if(loopId) clearInterval(loopId);
+  gameLoop.tick = 0;
+  loopId = setInterval(gameLoop, 50);
+}
+function stopGameLoop(){
+  if(loopId){clearInterval(loopId); loopId=null;}
+}
+
+// ===== 关卡 =====
+function spawnEnemies(){
+  enemies = [];
+  var cfg = getEnemyConfig(level);
+  var candidates = [];
+  for(var r=1;r<ROWS-1;r++) for(var c=1;c<COLS-1;c++){
+    var d = Math.abs(r-1)+Math.abs(c-1);
+    if(d>=4 && !(r===ROWS-2&&c===COLS-2)) candidates.push({r:r,c:c});
+  }
+  for(var i=candidates.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1)),t=candidates[i];candidates[i]=candidates[j];candidates[j]=t}
+  var idx = 0;
+  for(var i=0;i<cfg.length;i++){
+    for(var k=0;k<cfg[i].count;k++){
+      if(idx>=candidates.length) break;
+      var p = candidates[idx++];
+      enemies.push({r:p.r, c:p.c, type:cfg[i].type, lastDr:0, lastDc:0});
+    }
+  }
+}
+
+function initLevel(){
+  COLS = ROWS = getMazeSize();
+  maze = genMaze(COLS, ROWS);
+  fruits = placeFruits(maze, getFruitCount());
+  total = fruits.length; got = 0;
+  pos = {r:1, c:1};
+  sec = 0;
+  hp = maxHp;
+  invincible = INVINCIBLE_TICKS;
+  stunned = false; stunTimer = 0;
+  exploding = false; explodeTimer = 0;
+  spawnEnemies();
+  generateGrassDecor();
+  running = true;
+
+  resizeCanvas();
+  updateUI();
+  drawMaze();
+
+  if(timer) clearInterval(timer);
+  timer = setInterval(function(){
+    if(running){ sec++; updateUI(); }
+  }, 1000);
+
+  startGameLoop();
+}
+
+// ===== 胜利/失败 =====
+function win(){
+  running = false;
+  stopGameLoop();
+  if(timer){clearInterval(timer); timer=null;}
+  playWin();
+  var stars = sec < total*3 ? 3 : sec < total*5 ? 2 : 1;
+  var starStr = "";
+  for(var i=0;i<3;i++) starStr += i<stars ? "\u2B50" : "\u2606";
+  document.getElementById("starBar").textContent = starStr;
+  document.getElementById("statLine").textContent = "\u7528\u65F6\uFF1A"+sec+"s";
+  if(level < maxLevel){
+    document.getElementById("levelPreview").textContent =
+      "\u4E0B\u4E00\u5173\uFF1A\u7B2C"+(level+1)+"\u5173 - "+getLevelDescription(level+1);
+  } else {
+    document.getElementById("levelPreview").textContent = "\u606D\u559C\u901A\u5173\uFF01";
+  }
+  document.getElementById("winOverlay").classList.add("show");
+}
+
+function showGameOver(){
+  stopGameLoop();
+  if(timer){clearInterval(timer); timer=null;}
+  document.getElementById("overStatLine").textContent =
+    "\u7528\u65F6\uFF1A"+sec+"s \uFF5C \u5DF2\u6536\u96C6\uFF1A"+got+"/"+total;
+  document.getElementById("gameOverOverlay").classList.add("show");
+}
+
+function nextLevel(){
+  document.getElementById("winOverlay").classList.remove("show");
+  if(level < maxLevel){ level++; }
+  initLevel();
+}
+function retryLevel(){
+  document.getElementById("gameOverOverlay").classList.remove("show");
+  initLevel();
+}
+function goHome(){
+  document.getElementById("winOverlay").classList.remove("show");
+  document.getElementById("gameOverOverlay").classList.remove("show");
+  running = false;
+  stopGameLoop();
+  if(timer){clearInterval(timer); timer=null;}
+  level = 1;
+  document.getElementById("gameUI").classList.remove("active");
+  document.getElementById("charSelect").classList.add("active");
+  // 恢复角色选择键盘焦点
+  charKeyFocus = 0;
+  updateCharKeyFocus();
+}
+
+// ===== 角色选择（含原版键盘控制） =====
+var charKeyFocus = 0;
+
+function updateCharKeyFocus(){
+  var cards = document.querySelectorAll("#charGrid .char-card");
+  for(var i=0;i<cards.length;i++){
+    cards[i].classList.remove("key-focus");
+    if(i===charKeyFocus) cards[i].classList.add("key-focus");
+  }
+}
+
+function buildCharGrid(){
+  var grid = document.getElementById("charGrid");
+  grid.innerHTML = "";
+  for(var i=0;i<CHARS.length;i++){
+    (function(ch, idx){
+      var card = document.createElement("div");
+      card.className = "char-card";
+      var preview = document.createElement("div");
+      preview.className = "char-preview";
+      if(ch.img){
+        var img = new Image();
+        img.onload = function(){ imgCache[ch.id] = img; };
+        img.onerror = function(){ preview.textContent = ch.em; };
+        img.src = ch.img;
+        var imgEl = document.createElement("img");
+        imgEl.src = ch.img;
+        imgEl.onerror = function(){ preview.textContent = ch.em; imgEl.remove(); };
+        preview.appendChild(imgEl);
+      } else {
+        preview.textContent = ch.em;
+      }
+      var name = document.createElement("div");
+      name.className = "char-name";
+      name.textContent = ch.nm;
+      card.appendChild(preview); card.appendChild(name);
+      card.onclick = function(){
+        unlockAudio(); playSelect();
+        var all = grid.querySelectorAll(".char-card");
+        for(var k=0;k<all.length;k++) all[k].classList.remove("selected");
+        card.classList.add("selected");
+        sel = ch;
+        charKeyFocus = idx;
+        updateCharKeyFocus();
+      };
+      grid.appendChild(card);
+      if(idx===0){ card.classList.add("selected"); sel = ch; }
+    })(CHARS[i], i);
+  }
+  updateCharKeyFocus();
+}
+
+function startGame(){
+  unlockAudio();
+  if(!sel) sel = CHARS[0];
+  document.getElementById("charNameDisplay").textContent = sel.nm;
+  document.getElementById("charEmojiDisplay").textContent = sel.em;
+  document.getElementById("charSelect").classList.remove("active");
+  document.getElementById("gameUI").classList.add("active");
+  level = 1;
+  initLevel();
+  if(window.matchMedia && window.matchMedia("(pointer:coarse)").matches){
+    document.getElementById("dpad").classList.add("visible");
+  }
+}
+
+// ===== 输入 =====
+document.addEventListener("keydown", function(e){
+  // 在角色选择页：用方向键选择角色，回车/空格开始
+  var charSelectActive = document.getElementById("charSelect").classList.contains("active");
+  if(charSelectActive){
+    var cols = 4;
+    var n = CHARS.length;
+    if(e.key==="ArrowRight"){
+      charKeyFocus = (charKeyFocus+1) % n;
+      updateCharKeyFocus(); selectByFocus(); e.preventDefault();
+    } else if(e.key==="ArrowLeft"){
+      charKeyFocus = (charKeyFocus-1+n) % n;
+      updateCharKeyFocus(); selectByFocus(); e.preventDefault();
+    } else if(e.key==="ArrowDown"){
+      charKeyFocus = Math.min(n-1, charKeyFocus+cols);
+      updateCharKeyFocus(); selectByFocus(); e.preventDefault();
+    } else if(e.key==="ArrowUp"){
+      charKeyFocus = Math.max(0, charKeyFocus-cols);
+      updateCharKeyFocus(); selectByFocus(); e.preventDefault();
+    } else if(e.key==="Enter" || e.key===" "){
+      startGame(); e.preventDefault();
+    }
+    return;
+  }
+
+  if(!running) return;
+  if(e.key==="ArrowUp"||e.key==="w"||e.key==="W"){ move(-1,0); e.preventDefault(); }
+  else if(e.key==="ArrowDown"||e.key==="s"||e.key==="S"){ move(1,0); e.preventDefault(); }
+  else if(e.key==="ArrowLeft"||e.key==="a"||e.key==="A"){ move(0,-1); e.preventDefault(); }
+  else if(e.key==="ArrowRight"||e.key==="d"||e.key==="D"){ move(0,1); e.preventDefault(); }
+});
+
+function selectByFocus(){
+  var cards = document.querySelectorAll("#charGrid .char-card");
+  for(var k=0;k<cards.length;k++) cards[k].classList.remove("selected");
+  if(cards[charKeyFocus]){
+    cards[charKeyFocus].classList.add("selected");
+    sel = CHARS[charKeyFocus];
+    playSelect();
+  }
+}
+
+// dpad
+document.querySelectorAll(".dpad-btn").forEach(function(btn){
+  function trigger(e){
+    e.preventDefault();
+    unlockAudio();
+    var d = btn.getAttribute("data-dir");
+    if(d==="up") move(-1,0);
+    else if(d==="down") move(1,0);
+    else if(d==="left") move(0,-1);
+    else if(d==="right") move(0,1);
+  }
+  btn.addEventListener("touchstart", trigger);
+  btn.addEventListener("mousedown", trigger);
+});
+
+// 滑动
+(function(){
+  var sx=0, sy=0, active=false;
+  var wrap = document.getElementById("mazeWrapper");
+  wrap.addEventListener("touchstart", function(e){
+    var t=e.touches[0]; sx=t.clientX; sy=t.clientY; active=true;
+  });
+  wrap.addEventListener("touchmove", function(e){
+    if(!active) return;
+    var t=e.touches[0], dx=t.clientX-sx, dy=t.clientY-sy;
+    var th=24;
+    if(Math.abs(dx)<th && Math.abs(dy)<th) return;
+    if(Math.abs(dx)>Math.abs(dy)){ move(0, dx>0?1:-1); }
+    else { move(dy>0?1:-1, 0); }
+    active=false;
+    e.preventDefault();
+  }, {passive:false});
+  wrap.addEventListener("touchend", function(){active=false});
+})();
+
+window.addEventListener("resize", function(){
+  if(running || maze){
+    resizeCanvas();
+    drawMaze();
+  }
+});
+
+buildCharGrid();
+</script>
+</body>
+</html>

@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>小塔小游戏 - Flappy Bird</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Comic Sans MS','Chalkboard SE',sans-serif;background:linear-gradient(135deg,#a8dadc,#83c5be);min-height:100vh;display:flex;justify-content:center;align-items:center;overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent}
+#app{width:100%;max-width:780px;padding:12px;position:relative}
+.page{display:none;flex-direction:column;align-items:center}
+.page.active{display:flex}
+.game-header{text-align:center;margin-bottom:10px;width:100%}
+.game-header h1{font-size:clamp(22px,5vw,36px);color:#2d5016;text-shadow:2px 2px 0 #b5d99c;letter-spacing:2px}
+.game-header .subtitle{font-size:clamp(12px,2.5vw,16px);color:#4a7c2e}
+#charSelect .char-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0;width:100%;max-width:520px}
+.char-card{background:#fff;border-radius:20px;padding:12px 8px 10px;cursor:pointer;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.15);transition:all .2s;border:3px solid transparent}
+.char-card:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,.2)}
+.char-card.selected{border-color:#ff6b35;background:#fff5ee}
+.char-card.key-focus{box-shadow:0 0 0 3px #ff6b35, 0 6px 20px rgba(0,0,0,.2);transform:translateY(-3px)}
+.char-card .char-preview{width:64px;height:64px;margin:0 auto 6px;border-radius:50%;background:#f0ebe3;display:flex;align-items:center;justify-content:center;font-size:36px;overflow:hidden}
+.char-card .char-preview img{width:100%;height:100%;object-fit:cover}
+.char-card .char-name{font-size:13px;color:#5a3e1b;font-weight:bold}
+.btn-start{background:#ff6b35;color:#fff;border:none;border-radius:20px;padding:14px 48px;font-size:20px;font-weight:bold;cursor:pointer;box-shadow:0 4px 0 #c44a1e;font-family:inherit;margin-top:4px}
+.btn-start:active{transform:translateY(2px);box-shadow:0 2px 0 #c44a1e}
+.btn-home{background:#ddd;color:#5a3e1b;border:none;border-radius:14px;padding:10px 20px;font-size:16px;font-weight:bold;cursor:pointer;font-family:inherit;box-shadow:0 3px 0 #bbb}
+.btn-home:active{transform:translateY(2px)}
+.btn-pause{background:#ffc107;color:#5a3e1b;border:none;border-radius:14px;padding:8px 14px;font-size:14px;font-weight:bold;cursor:pointer;font-family:inherit;box-shadow:0 3px 0 #cc9a06;margin-right:6px}
+.btn-pause:active{transform:translateY(2px)}
+.info-bar{display:flex;justify-content:space-between;align-items:center;width:100%;max-width:700px;background:rgba(255,255,255,.85);border-radius:16px;padding:8px 16px;margin-bottom:8px;box-shadow:0 2px 8px rgba(0,0,0,.1);gap:8px}
+.info-bar .info-item{display:flex;align-items:center;gap:5px;font-size:clamp(13px,2.5vw,16px);color:#5a3e1b;font-weight:bold}
+.game-wrapper{position:relative;width:100%;max-width:700px;aspect-ratio:3/4;border-radius:20px;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,.3);touch-action:none;background:#4dc9f6;cursor:pointer}
+#gameCanvas{display:block;width:100%;height:100%;image-rendering:auto}
+#scoreDisplay{position:absolute;top:12px;left:50%;transform:translateX(-50%);font-size:clamp(28px,7vw,52px);font-weight:bold;color:#fff;text-shadow:3px 3px 0 rgba(0,0,0,.4);pointer-events:none;z-index:5}
+#readyMsg{position:absolute;top:50%;left:50%;transform:translate(-50%,-60%);font-size:clamp(18px,4vw,28px);color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,.3);pointer-events:none;z-index:5;text-align:center;font-weight:bold}
+#readyMsg .tap-icon{font-size:clamp(40px,10vw,60px);display:block;margin-bottom:8px;animation:bounce 1s infinite}
+#pauseMsg{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:clamp(24px,5vw,36px);color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,.4);pointer-events:none;z-index:5;font-weight:bold;display:none;background:rgba(0,0,0,.5);padding:16px 32px;border-radius:20px}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+#gameOverOverlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:100}
+#gameOverOverlay.show{display:flex}
+.win-card{background:#fff;border-radius:32px;padding:32px 28px 24px;text-align:center;max-width:400px;width:90%;box-shadow:0 12px 48px rgba(0,0,0,.3);animation:popIn .4s cubic-bezier(.175,.885,.32,1.275)}
+@keyframes popIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+.win-card .big-emoji{font-size:72px;margin-bottom:8px}
+.win-card h2{font-size:28px;color:#5a3e1b;margin-bottom:4px}
+.win-card p{color:#8b6b3d;font-size:16px;margin-bottom:6px}
+.win-card .score-big{font-size:52px;font-weight:bold;color:#ff6b35;margin:8px 0}
+.win-card .best-label{font-size:16px;color:#8b6b3d;margin-bottom:16px}
+.win-card .best-label span{color:#5a3e1b;font-weight:bold}
+.win-card .new-best{display:inline-block;background:#ffd700;color:#5a3e1b;padding:4px 12px;border-radius:12px;font-size:14px;font-weight:bold;margin-bottom:10px;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.win-card .btn-group{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.win-card button{padding:10px 24px;border:none;border-radius:14px;font-size:16px;font-weight:bold;cursor:pointer;font-family:inherit;box-shadow:0 3px 0 rgba(0,0,0,.15)}
+.win-card button:active{transform:translateY(2px)}
+.win-card .btn-again{background:#ff6b35;color:#fff;box-shadow:0 3px 0 #c44a1e}
+.win-card .btn-retry{background:#4CAF50;color:#fff;box-shadow:0 3px 0 #388E3C}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- 角色选择 -->
+  <div id="charSelect" class="page active">
+    <div class="game-header"><h1>🐦 Flappy Bird 🐦</h1><div class="subtitle">选择你的角色，穿越管道吧！</div></div>
+    <div class="char-grid" id="charGrid"></div>
+    <button class="btn-start" onclick="startGame()">开始游戏 🎮</button>
+  </div>
+
+  <!-- 游戏 -->
+  <div id="gameUI" class="page">
+    <div class="info-bar">
+      <div class="info-item"><span class="emoji-badge" id="charEmojiDisplay">🐰</span><span id="charNameDisplay">小塔</span></div>
+      <div class="info-item">🏆 最高: <span id="bestScoreDisplay">0</span></div>
+      <div style="display:flex">
+        <button class="btn-pause" id="btnPause" onclick="togglePause()">⏸️</button>
+        <button class="btn-home" onclick="goHome()">🏠 主页</button>
+      </div>
+    </div>
+    <div class="game-wrapper" id="gameWrapper">
+      <canvas id="gameCanvas"></canvas>
+      <div id="scoreDisplay">0</div>
+      <div id="readyMsg"><span class="tap-icon">👆</span>点击或按空格键开始</div>
+      <div id="pauseMsg">⏸ 已暂停</div>
+    </div>
+  </div>
+
+  <!-- 游戏结束 -->
+  <div id="gameOverOverlay">
+    <div class="win-card">
+      <div class="big-emoji" id="goEmoji">😵</div>
+      <h2>游戏结束</h2>
+      <div id="newBestBadge" class="new-best" style="display:none">🎉 新纪录！</div>
+      <div class="score-big" id="goScore">0</div>
+      <div class="best-label">🏆 最高纪录: <span id="goBest">0</span></div>
+      <div class="btn-group">
+        <button class="btn-again" onclick="restartGame()">再来一次 🔄</button>
+        <button class="btn-home" onclick="goHome()">🏠 主页</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== 角色数据（与 maze.html 保持一致） =====
+var CHARS = [
+  {id:"a", nm:"beta",   em:"🐰", co:"#FFB7C5", img:"role/beta2.JPG"},
+  {id:"b", nm:"dad",    em:"🦊", co:"#FFD700", img:"role/dad.JPG"},
+  {id:"c", nm:"mum",    em:"👩", co:"#FF69B4", img:"role/mum.JPG"},
+  {id:"i", nm:"Duggee", em:"🐶", co:"#FFB347", img:"role/duggee.png"},
+  {id:"j", nm:"Betty",  em:"🐙", co:"#FF69B4", img:"role/betty.png"},
+  {id:"k", nm:"Happy",  em:"🐸", co:"#90EE90", img:"role/happy.png"},
+  {id:"l", nm:"Norrie", em:"🐭", co:"#87CEEB", img:"role/norrie.png"},
+  {id:"m", nm:"Roly",   em:"🐹", co:"#DDA0DD", img:"role/roly.png"},
+  {id:"n", nm:"Tag",    em:"🦏", co:"#FFD700", img:"role/tag.png"}
+];
+
+var sel = null;
+var imgCache = {};
+var charKeyFocus = 0;
+
+// ===== 音效（参考 maze.html，音量调大） =====
+var audioCtx = null;
+function unlockAudio(){
+  if(!audioCtx){
+    try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){}
+  }
+  if(audioCtx && audioCtx.state==="suspended") audioCtx.resume();
+}
+function playTone(freq, dur, type, vol){
+  if(!audioCtx) return;
+  try{
+    var osc = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+    osc.type = type || "square";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol||0.3, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime+dur);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime+dur);
+  }catch(e){}
+}
+// 参考 maze.html 的音量级别(0.25~0.35)，原 flappy 是 0.06~0.12
+function playFlap(){ playTone(500,0.08,"sine",0.28); }
+function playScore(){
+  playTone(800,0.12,"sine",0.32);
+  setTimeout(function(){playTone(1000,0.12,"sine",0.32)},100);
+}
+function playHit(){
+  playTone(200,0.25,"sawtooth",0.38);
+  setTimeout(function(){playTone(120,0.3,"sawtooth",0.32)},120);
+}
+function playSelect(){
+  playTone(660,0.08,"sine",0.25);
+  setTimeout(function(){playTone(880,0.1,"sine",0.25)},60);
+}
+function playNewBest(){
+  playTone(880,0.12,"sine",0.32);
+  setTimeout(function(){playTone(1100,0.12,"sine",0.32)},120);
+  setTimeout(function(){playTone(1320,0.2,"sine",0.32)},240);
+}
+
+document.addEventListener("click", unlockAudio, {once:false});
+document.addEventListener("touchstart", unlockAudio, {once:false, passive:true});
+document.addEventListener("keydown", unlockAudio, {once:false});
+
+// ===== 角色选择 =====
+function updateCharKeyFocus(){
+  var cards = document.querySelectorAll("#charGrid .char-card");
+  for(var i=0;i<cards.length;i++){
+    cards[i].classList.remove("key-focus");
+    if(i===charKeyFocus) cards[i].classList.add("key-focus");
+  }
+}
+function selectCharByIndex(idx){
+  if(idx<0||idx>=CHARS.length) return;
+  charKeyFocus = idx;
+  sel = CHARS[idx];
+  var cards = document.querySelectorAll("#charGrid .char-card");
+  for(var k=0;k<cards.length;k++) cards[k].classList.remove("selected");
+  if(cards[idx]) cards[idx].classList.add("selected");
+  updateCharKeyFocus();
+}
+function buildCharGrid(){
+  var grid = document.getElementById("charGrid");
+  grid.innerHTML = "";
+  for(var i=0;i<CHARS.length;i++){
+    (function(ch, idx){
+      var card = document.createElement("div");
+      card.className = "char-card";
+      var preview = document.createElement("div");
+      preview.className = "char-preview";
+      if(ch.img){
+        var img = new Image();
+        img.onload = function(){ imgCache[ch.id] = img; };
+        img.src = ch.img;
+        var imgEl = document.createElement("img");
+        imgEl.src = ch.img;
+        imgEl.onerror = function(){ preview.textContent = ch.em; imgEl.remove(); };
+        preview.appendChild(imgEl);
+      } else {
+        preview.textContent = ch.em;
+      }
+      var name = document.createElement("div");
+      name.className = "char-name";
+      name.textContent = ch.nm;
+      card.appendChild(preview); card.appendChild(name);
+      card.onclick = function(){
+        unlockAudio(); playSelect();
+        selectCharByIndex(idx);
+      };
+      grid.appendChild(card);
+      if(idx===0){ card.classList.add("selected"); sel = ch; }
+    })(CHARS[i], i);
+  }
+  updateCharKeyFocus();
+}
+
+// 角色选择页键盘导航
+document.addEventListener("keydown", function(e){
+  var charPage = document.getElementById("charSelect");
+  if(!charPage.classList.contains("active")) return;
+  var cols = 4;
+  var n = CHARS.length;
+  if(e.key==="ArrowRight"){ selectCharByIndex(Math.min(n-1, charKeyFocus+1)); e.preventDefault(); }
+  else if(e.key==="ArrowLeft"){ selectCharByIndex(Math.max(0, charKeyFocus-1)); e.preventDefault(); }
+  else if(e.key==="ArrowDown"){ selectCharByIndex(Math.min(n-1, charKeyFocus+cols)); e.preventDefault(); }
+  else if(e.key==="ArrowUp"){ selectCharByIndex(Math.max(0, charKeyFocus-cols)); e.preventDefault(); }
+  else if(e.key==="Enter"||e.key===" "){ startGame(); e.preventDefault(); }
+});
+
+// ===== 游戏变量 =====
+var canvas, ctx;
+var W, H;
+var bird, pipes, ground;
+var score, bestScore;
+var gameState; // "ready", "playing", "dead", "paused"
+var prevStateForPause = null;
+var gameLoopId = null;
+var frameCount = 0;
+var pipeGap, pipeWidth, pipeSpeed, basePipeSpeed;
+var birdRadius;
+var groundHeight;
+
+// ===== 游戏初始化 =====
+function startGame(){
+  unlockAudio();
+  if(!sel) sel = CHARS[0];
+  document.getElementById("charEmojiDisplay").textContent = sel.em;
+  document.getElementById("charNameDisplay").textContent = sel.nm;
+  document.getElementById("charSelect").classList.remove("active");
+  document.getElementById("gameUI").classList.add("active");
+  bestScore = parseInt(localStorage.getItem("flappyBest") || "0");
+  document.getElementById("bestScoreDisplay").textContent = bestScore;
+  initGame();
+}
+
+function goHome(){
+  if(gameLoopId){ cancelAnimationFrame(gameLoopId); gameLoopId = null; }
+  document.getElementById("gameOverOverlay").classList.remove("show");
+  document.getElementById("gameUI").classList.remove("active");
+  document.getElementById("charSelect").classList.add("active");
+}
+
+function restartGame(){
+  document.getElementById("gameOverOverlay").classList.remove("show");
+  initGame();
+}
+
+function initGame(){
+  canvas = document.getElementById("gameCanvas");
+  ctx = canvas.getContext("2d");
+  resizeCanvas();
+  score = 0;
+  gameState = "ready";
+  frameCount = 0;
+  document.getElementById("scoreDisplay").textContent = "0";
+  var readyMsg = document.getElementById("readyMsg");
+  readyMsg.style.display = "block";
+  readyMsg.innerHTML = '<span class="tap-icon">' + sel.em + '</span>点击或按空格键开始';
+  document.getElementById("pauseMsg").style.display = "none";
+  document.getElementById("gameOverOverlay").classList.remove("show");
+  document.getElementById("btnPause").textContent = "⏸️";
+
+  // Bird
+  birdRadius = Math.round(Math.min(W,H) * 0.035);
+  bird = {
+    x: W * 0.25,
+    y: H * 0.4,
+    vy: 0,
+    rot: 0,
+    r: birdRadius
+  };
+
+  // Pipes
+  pipeWidth = Math.round(W * 0.1);
+  pipeGap = Math.round(H * 0.40);
+  basePipeSpeed = Math.max(1.0, W * 0.0025);
+  pipeSpeed = basePipeSpeed;
+  pipes = [];
+
+  // Ground
+  groundHeight = Math.round(H * 0.1);
+  ground = { x: 0 };
+
+  if(gameLoopId) cancelAnimationFrame(gameLoopId);
+  gameLoop();
+}
+
+function resizeCanvas(){
+  var rect = document.getElementById("gameWrapper").getBoundingClientRect();
+  canvas.width = Math.round(rect.width);
+  canvas.height = Math.round(rect.height);
+  W = canvas.width;
+  H = canvas.height;
+}
+
+// ===== 物理 =====
+function flap(){
+  if(gameState === "ready"){
+    gameState = "playing";
+    document.getElementById("readyMsg").style.display = "none";
+    bird.vy = -H * 0.0125;
+    playFlap();
+  } else if(gameState === "playing"){
+    bird.vy = -H * 0.0125;
+    playFlap();
+  }
+}
+
+function togglePause(){
+  if(gameState === "playing"){
+    prevStateForPause = "playing";
+    gameState = "paused";
+    document.getElementById("pauseMsg").style.display = "block";
+    document.getElementById("btnPause").textContent = "▶️";
+  } else if(gameState === "paused"){
+    gameState = prevStateForPause || "playing";
+    document.getElementById("pauseMsg").style.display = "none";
+    document.getElementById("btnPause").textContent = "⏸️";
+  }
+}
+
+function update(){
+  if(gameState === "paused") return;
+  frameCount++;
+
+  // 难度递增：每 5 分加一点速度
+  pipeSpeed = basePipeSpeed * (1 + Math.min(score * 0.02, 0.6));
+
+  // Bird physics
+  bird.vy += H * 0.00065; // gravity
+  bird.y += bird.vy;
+  bird.rot = Math.min(Math.PI/3, Math.max(-Math.PI/3, bird.vy * 0.08));
+
+  // Pipes
+  if(gameState === "playing" && frameCount > 60 && frameCount % Math.max(90, Math.round(W*0.13)) === 0){
+    addPipe();
+  }
+  for(var i=pipes.length-1; i>=0; i--){
+    if(gameState === "playing") pipes[i].x -= pipeSpeed;
+    if(pipes[i].x + pipeWidth < 0){
+      pipes.splice(i,1);
+    }
+  }
+  // Score
+  if(gameState === "playing"){
+    for(var i=0; i<pipes.length; i++){
+      if(!pipes[i].scored && pipes[i].x + pipeWidth < bird.x){
+        pipes[i].scored = true;
+        score++;
+        document.getElementById("scoreDisplay").textContent = score;
+        playScore();
+      }
+    }
+  }
+
+  // Ground scroll
+  if(gameState === "playing" || gameState === "ready"){
+    ground.x -= pipeSpeed;
+    if(ground.x <= -W) ground.x = 0;
+  }
+
+  // Collision
+  if(gameState === "playing"){
+    if(bird.y + bird.r > H - groundHeight){
+      die(); return;
+    }
+    if(bird.y - bird.r < 0){
+      bird.y = bird.r;
+      bird.vy = 0;
+    }
+    for(var i=0; i<pipes.length; i++){
+      var p = pipes[i];
+      var bx = bird.x, by = bird.y, br = bird.r;
+      if(bx + br > p.x && bx - br < p.x + pipeWidth){
+        if(by - br < p.topH){ die(); return; }
+        if(by + br > p.topH + pipeGap){ die(); return; }
+      }
+    }
+  }
+
+  // Ready 状态小鸟轻微上下浮动
+  if(gameState === "ready"){
+    bird.y = H * 0.4 + Math.sin(frameCount * 0.08) * H * 0.02;
+    bird.vy = 0;
+    bird.rot = 0;
+  }
+}
+
+function addPipe(){
+  var margin = Math.round(H * 0.12);
+  var topH = Math.round(margin + Math.random() * (H - groundHeight - pipeGap - margin*2));
+  pipes.push({
+    x: W,
+    topH: topH,
+    scored: false
+  });
+}
+
+function die(){
+  if(gameState === "dead") return;
+  gameState = "dead";
+  playHit();
+  var isNewBest = false;
+  if(score > bestScore){
+    bestScore = score;
+    localStorage.setItem("flappyBest", bestScore.toString());
+    isNewBest = true;
+  }
+  document.getElementById("goEmoji").textContent = sel.em;
+  document.getElementById("goScore").textContent = score;
+  document.getElementById("goBest").textContent = bestScore;
+  document.getElementById("bestScoreDisplay").textContent = bestScore;
+  document.getElementById("newBestBadge").style.display = isNewBest ? "inline-block" : "none";
+  setTimeout(function(){
+    document.getElementById("gameOverOverlay").classList.add("show");
+    if(isNewBest) playNewBest();
+  }, 500);
+}
+
+// ===== 绘制 =====
+function draw(){
+  ctx.clearRect(0,0,W,H);
+
+  // Sky gradient
+  var skyGrad = ctx.createLinearGradient(0,0,0,H);
+  skyGrad.addColorStop(0,"#4dc9f6");
+  skyGrad.addColorStop(0.7,"#87CEEB");
+  skyGrad.addColorStop(1,"#b8e6b8");
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0,0,W,H);
+
+  // Clouds
+  ctx.fillStyle = "rgba(255,255,255,0.5)";
+  for(var i=0;i<4;i++){
+    var cx = (frameCount*0.2 + i*W*0.3) % (W*1.2) - W*0.2;
+    var cy = H*0.08 + i*H*0.06;
+    var cw = W*0.12;
+    drawCloud(ctx, cx, cy, cw);
+  }
+
+  // Pipes
+  for(var i=0;i<pipes.length;i++){
+    drawPipe(pipes[i]);
+  }
+
+  // Bird
+  drawBird();
+
+  // Ground
+  drawGround();
+}
+
+function drawCloud(c,x,y,w){
+  var h = w*0.6;
+  ctx.beginPath();
+  ctx.ellipse(x,y,w*0.3,h*0.4,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(x-w*0.2,y+h*0.15,w*0.25,h*0.3,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(x+w*0.2,y+h*0.15,w*0.25,h*0.3,0,0,Math.PI*2);
+  ctx.fill();
+}
+
+function drawPipe(p){
+  var x = p.x;
+  var topH = p.topH;
+  ctx.fillStyle = "#73c245";
+  ctx.fillRect(x, 0, pipeWidth, topH);
+  var capOver = Math.round(pipeWidth*0.15);
+  ctx.fillStyle = "#8fd65a";
+  ctx.fillRect(x - capOver, topH - Math.round(pipeWidth*0.2), pipeWidth + capOver*2, Math.round(pipeWidth*0.2));
+  ctx.fillStyle = "#5fa832";
+  ctx.fillRect(x - capOver, topH - Math.round(pipeWidth*0.2), pipeWidth + capOver*2, 4);
+  ctx.fillRect(x, topH - 4, pipeWidth, 4);
+  ctx.fillStyle = "#4d8a28";
+  ctx.fillRect(x, 0, 4, topH);
+
+  var bottomY = topH + pipeGap;
+  var bottomH = H - groundHeight - bottomY;
+  ctx.fillStyle = "#73c245";
+  ctx.fillRect(x, bottomY, pipeWidth, bottomH);
+  ctx.fillStyle = "#8fd65a";
+  ctx.fillRect(x - capOver, bottomY, pipeWidth + capOver*2, Math.round(pipeWidth*0.2));
+  ctx.fillStyle = "#5fa832";
+  ctx.fillRect(x - capOver, bottomY, pipeWidth + capOver*2, 4);
+  ctx.fillRect(x, bottomY, pipeWidth, 4);
+  ctx.fillStyle = "#4d8a28";
+  ctx.fillRect(x + pipeWidth - 4, bottomY, 4, bottomH);
+}
+
+function drawBird(){
+  var x = bird.x, y = bird.y, r = bird.r;
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(bird.rot);
+
+  var img = imgCache[sel.id];
+  var size = r * 2.4;
+  if(img && img.complete && img.naturalWidth > 0){
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(0, 0, r*1.15, 0, Math.PI*2);
+    ctx.clip();
+    ctx.drawImage(img, -size/2, -size/2, size, size);
+    ctx.restore();
+    // 边框
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, r*1.15, 0, Math.PI*2);
+    ctx.stroke();
+  } else {
+    ctx.fillStyle = sel.co || "#FFB7C5";
+    ctx.beginPath();
+    ctx.arc(0, 0, r*1.15, 0, Math.PI*2);
+    ctx.fill();
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = "#5a3e1b";
+    ctx.font = r*1.2 + "px serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(sel.em, 0, 2);
+  }
+
+  // Wings
+  ctx.save();
+  ctx.fillStyle = "rgba(255,255,255,0.6)";
+  var wingPhase = gameState==="playing" ? Math.sin(frameCount*0.3) : Math.sin(frameCount*0.1);
+  var wingY = -r*0.3 + wingPhase * r*0.25;
+  ctx.beginPath();
+  ctx.ellipse(-r*0.5, wingY, r*0.5, r*0.35, -0.4 + wingPhase*0.2, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+
+  // Eye
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.arc(r*0.35, -r*0.15, r*0.3, 0, Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle = "#333";
+  ctx.beginPath();
+  ctx.arc(r*0.4, -r*0.15, r*0.15, 0, Math.PI*2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+function drawGround(){
+  var gy = H - groundHeight;
+  // 草
+  ctx.fillStyle = "#a8d96b";
+  ctx.fillRect(0, gy, W, Math.round(groundHeight*0.3));
+  // 土
+  ctx.fillStyle = "#d4a373";
+  ctx.fillRect(0, gy + Math.round(groundHeight*0.3), W, groundHeight - Math.round(groundHeight*0.3));
+  // 草纹
+  ctx.fillStyle = "#7fb84d";
+  var stripeW = Math.round(W*0.04);
+  for(var x = ground.x % (stripeW*2); x < W; x += stripeW*2){
+    ctx.fillRect(x, gy, stripeW, 4);
+  }
+  // 暗色底纹
+  ctx.fillStyle = "#b8895a";
+  for(var x = ground.x % (stripeW*2); x < W; x += stripeW*2){
+    ctx.fillRect(x, gy + Math.round(groundHeight*0.6), stripeW, 3);
+  }
+}
+
+// ===== 主循环 =====
+function gameLoop(){
+  update();
+  draw();
+  gameLoopId = requestAnimationFrame(gameLoop);
+}
+
+// ===== 输入 =====
+document.getElementById("gameWrapper").addEventListener("mousedown", function(e){
+  e.preventDefault();
+  unlockAudio();
+  if(gameState === "ready" || gameState === "playing") flap();
+});
+document.getElementById("gameWrapper").addEventListener("touchstart", function(e){
+  e.preventDefault();
+  unlockAudio();
+  if(gameState === "ready" || gameState === "playing") flap();
+}, {passive:false});
+
+document.addEventListener("keydown", function(e){
+  if(!document.getElementById("gameUI").classList.contains("active")) return;
+  if(e.key === " " || e.key === "ArrowUp" || e.key === "w" || e.key === "W"){
+    e.preventDefault();
+    if(gameState === "ready" || gameState === "playing") flap();
+    else if(gameState === "dead") restartGame();
+  } else if(e.key === "p" || e.key === "P" || e.key === "Escape"){
+    e.preventDefault();
+    togglePause();
+  }
+});
+
+// 窗口大小变化
+window.addEventListener("resize", function(){
+  if(document.getElementById("gameUI").classList.contains("active") && canvas){
+    var oldW = W, oldH = H;
+    resizeCanvas();
+    // 按比例调整鸟和管道
+    if(oldW && oldH){
+      var rx = W/oldW, ry = H/oldH;
+      if(bird){ bird.x *= rx; bird.y *= ry; bird.r = Math.round(Math.min(W,H)*0.035); }
+      pipeWidth = Math.round(W * 0.1);
+      pipeGap = Math.round(H * 0.40);
+      basePipeSpeed = Math.max(1.0, W * 0.0025);
+      groundHeight = Math.round(H * 0.1);
+      for(var i=0;i<pipes.length;i++){
+        pipes[i].x *= rx;
+        pipes[i].topH *= ry;
+      }
+    }
+  }
+});
+
+// 切换标签自动暂停
+document.addEventListener("visibilitychange", function(){
+  if(document.hidden && gameState === "playing"){
+    togglePause();
+  }
+});
+
+// ===== 启动 =====
+buildCharGrid();
+</script>
+</body>
+</html>
