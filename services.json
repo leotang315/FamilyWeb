@@ -22,12 +22,16 @@
   },
   {
     "name": "WebDAV 文件服务",
-    "url": "http://192.168.2.101:5005/dav/leo/",
+    "url": "http://47.116.143.186:15005/dav/leo/",
     "icon": "fas fa-folder-open",
     "iconClass": "icon-file",
     "desc": "NAS WebDAV · 文件管理（仅内网）"
   },
-
-  
+  {
+    "name": "小游戏",
+    "url": "http://47.116.143.186:18080/game/index.html",
+    "icon": "fas fa-gamepad",
+    "iconClass": "icon-note",
+    "desc": "迷宫小游戏 · 放松一下"
+  }
 ]
-
