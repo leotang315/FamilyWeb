@@ -173,6 +173,52 @@
 .member-card.me {            min-width: 150px;            border-color: rgba(0, 212, 170, 0.4);            background: linear-gradient(135deg, rgba(0, 212, 170, 0.08), rgba(108, 99, 255, 0.08));        }
 .member-card.me .member-name { color: var(--accent-2); font-size: 16px; }
 @media (max-width: 520px) {            .tree-top { gap: 10px; }            .member-card { min-width: 80px; min-height: 130px; }
+    
+        .family-collapse {
+            display: flex; flex-direction: column; align-items: center;
+            width: 100%;
+        }
+        .collapse-toggle {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 13px;
+            padding: 6px 18px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .collapse-toggle:hover {
+            border-color: var(--accent-1);
+            color: var(--text-primary);
+        }
+        .collapse-toggle i { transition: transform 0.3s ease; font-size: 11px; }
+        .collapse-toggle.collapsed i { transform: rotate(-90deg); }
+        .collapse-content {
+            overflow: hidden;
+            transition: max-height 0.4s ease, opacity 0.3s ease, margin 0.3s ease;
+            max-height: 250px;
+            opacity: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .collapse-content.collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin: 0;
+            padding: 0;
+        }
+        .collapse-content.collapsed .couple-group,
+        .collapse-content.collapsed .branch-line {
+            display: none;
+        }
+
     </style>
 </head>
 <body>
@@ -197,29 +243,682 @@
     </div>
 </div>
 
-<div class="section-title">
-<i class="fas fa-sitemap">
-</i> 家庭介绍</div>
-<section class="family-section">    <div class="family-panel">        <div class="family-intro">            <h3>我的一家</h3>            <p>上面是长辈的守护，中间是爸爸妈妈的陪伴，下面是小塔。家人的名字连在一起，就是一个家最柔软也最有力量的样子。</p>        </div>        <div class="family-tree">            <div class="tree-top">                <div class="tree-column">                    <div class="couple-group">                        <div class="member-card">            <div class="member-avatar avatar-elder-m"><img src=\"images/grandpa.jpg\" alt="爷爷"></div>
-            <div class="member-name">爷爷</div>                            <div class="member-role">慈爱长辈</div>                        </div>                        <div class="couple-heart">
-<i class="fas fa-heart">
-</i>
-</div>                        <div class="member-card">            <div class="member-avatar avatar-elder-f"><img src=\"images/grandma.jpg\" alt="奶奶"></div>
-            <div class="member-name">奶奶</div>                            <div class="member-role">温暖守护</div>                        </div>                    </div>                    <div class="branch-line">
-</div>                    <div class="member-card parent-card">            <div class="member-avatar avatar-dad"><img src=\"images/dad.jpg\" alt="爸爸"></div>
-            <div class="member-name">爸爸</div>                        <div class="member-role">家庭依靠</div>                    </div>                </div>                <div class="tree-column">                    <div class="couple-group">                        <div class="member-card">            <div class="member-avatar avatar-elder-m"><img src=\"images/gonggong.jpg\" alt="公公"></div>
-            <div class="member-name">公公</div>                            <div class="member-role">慈祥长辈</div>                        </div>                        <div class="couple-heart">
-<i class="fas fa-heart">
-</i>
-</div>                        <div class="member-card">            <div class="member-avatar avatar-elder-f"><img src=\"images/apo.jpg\" alt="阿婆"></div>
-            <div class="member-name">阿婆</div>                            <div class="member-role">温柔长辈</div>                        </div>                    </div>                    <div class="branch-line">
-</div>                    <div class="member-card parent-card">            <div class="member-avatar avatar-mom"><img src=\"images/mom.jpg\" alt="妈妈"></div>
-            <div class="member-name">妈妈</div>                        <div class="member-role">家的温度</div>                    </div>                </div>            </div>            <div class="parents-link">                <div class="link-heart">
-<i class="fas fa-heart">
-</i>
-</div>            </div>            <div class="tree-bottom">                <div class="member-card me">            <div class="member-avatar avatar-me"><img src=\"images/me.jpg\" alt="小塔"></div>
-            <div class="member-name">小塔</div>                    <div class="member-role">被爱包围的我</div>                </div>            </div>        </div>    </div>
+
+<style>
+/* ========== 家庭树（绘本风 · 横版） ========== */
+.family-section { max-width: 1200px; margin: 0 auto; padding: 0 24px 60px; }
+
+.family-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 28px 24px 32px;
+    position: relative;
+    overflow: hidden;
+}
+.family-panel::before {
+    content: "";
+    position: absolute; top: 0; left: 0;
+    width: 100%; height: 3px;
+    background: linear-gradient(90deg, var(--accent-1), var(--accent-2), var(--accent-3));
+}
+
+.family-intro { text-align: center; margin-bottom: 18px; }
+.family-intro h3 {
+    font-size: 22px; font-weight: 500; margin-bottom: 6px;
+    background: linear-gradient(135deg, #fff, var(--accent-5));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.family-intro p { font-size: 14px; color: var(--text-secondary); line-height: 1.7; max-width: 600px; margin: 0 auto; }
+
+/* 画布 */
+.tree-canvas {
+    position: relative;
+    width: 100%;
+    max-width: 960px;
+    margin: 18px auto 0;
+    aspect-ratio: 960 / 600;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.15);
+}
+
+.tree-canvas .scene {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+}
+
+/* 标题牌 */
+.tree-canvas .title-board {
+    position: absolute;
+    top: 3%; left: 50%;
+    transform: translateX(-50%);
+    background: #f5d76e;
+    color: #5a4019;
+    font-weight: 700;
+    font-size: 20px;
+    padding: 5px 28px;
+    border-radius: 12px;
+    border: 3px solid #e8c14a;
+    font-family: "Comic Sans MS", "Noto Sans SC", cursive;
+    letter-spacing: 2px;
+    z-index: 5;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.1), 0 6px 12px rgba(0,0,0,0.15);
+    white-space: nowrap;
+}
+
+/* 成员节点 */
+.tree-canvas .node {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 4;
+}
+.tree-canvas .node:hover { z-index: 10; }
+
+.tree-canvas .node .photo {
+    width: 62px; height: 62px;
+    border-radius: 50%;
+    background: #fff7d6;
+    border: 4px solid #6b3a1d;
+    overflow: visible;
+    margin: 0 auto;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    display: flex; align-items: center; justify-content: center;
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.35s ease;
+    position: relative;
+    border-radius: 50%;
+    overflow: hidden;
+}
+.tree-canvas .node:hover .photo {
+    transform: scale(1.4) translateY(-5px) rotate(-3deg);
+    box-shadow: 0 14px 28px rgba(0,0,0,0.45), 0 0 0 5px rgba(255,247,214,0.6);
+}
+.tree-canvas .node .photo img { width: 100%; height: 100%; object-fit: cover; }
+.tree-canvas .node .photo .fallback { font-size: 28px; }
+
+.tree-canvas .node .label {
+    margin-top: 4px;
+    font-size: 11px; font-weight: 700;
+    color: #3a2810;
+    background: rgba(255,247,214,0.92);
+    padding: 1px 8px;
+    border-radius: 8px;
+    display: inline-block;
+    white-space: nowrap;
+    font-family: "Comic Sans MS", "Noto Sans SC", cursive;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+.tree-canvas .node:hover .label { transform: scale(1.12); }
+
+.tree-canvas .node.me .photo {
+    border-color: #ff7043;
+    box-shadow: 0 0 0 3px rgba(255,112,67,0.35), 0 4px 12px rgba(0,0,0,0.3);
+}
+.tree-canvas .node.me:hover .photo {
+    box-shadow: 0 0 0 5px rgba(255,112,67,0.5), 0 14px 28px rgba(0,0,0,0.4);
+}
+.tree-canvas .node.me .label { background: #ffd54f; }
+
+/* 节点位置（全部在树冠内，960×600） */
+.node.grandpa { top: 28%; left: 32%; }
+.node.grandma { top: 28%; left: 44%; }
+.node.gong    { top: 28%; left: 56%; }
+.node.popo    { top: 28%; left: 68%; }
+.node.dad     { top: 54%; left: 38%; }
+.node.mom     { top: 54%; left: 62%; }
+.node.me      { top: 76%; left: 50%; }
+
+@media (max-width: 680px) {
+    .tree-canvas .node .photo { width: 46px; height: 46px; border-width: 3px; }
+    .tree-canvas .node .label { font-size: 9px; }
+    .tree-canvas .title-board { font-size: 15px; padding: 4px 16px; }
+}
+</style>
+
+<div class="section-title"><i class="fas fa-sitemap"></i> 家庭介绍</div>
+<section class="family-section">
+    <div class="family-panel">
+        <div class="family-intro">
+            <h3>我的一家</h3>
+            <p>挂在大树上的，是把我紧紧抱在中间的人。</p>
+        </div>
+
+        <div class="tree-canvas">
+            <svg class="scene" viewBox="0 0 960 600"
+                 preserveAspectRatio="xMidYMid slice"
+                 xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <!-- 天空渐变 -->
+                    <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%"   stop-color="#5bc8e8"/>
+                        <stop offset="100%" stop-color="#abe8f8"/>
+                    </linearGradient>
+                    <!-- 草地渐变 -->
+                    <linearGradient id="grassGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%"   stop-color="#8ed26a"/>
+                        <stop offset="100%" stop-color="#6ab84a"/>
+                    </linearGradient>
+                    <!-- 太阳光晕 -->
+                    <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+                        <stop offset="0%"   stop-color="#ffe87a"/>
+                        <stop offset="60%"  stop-color="#ffd84d"/>
+                        <stop offset="100%" stop-color="#ffa500" stop-opacity="0"/>
+                    </radialGradient>
+                    <!-- 树冠渐变 -->
+                    <radialGradient id="leafGrad" cx="45%" cy="35%" r="60%">
+                        <stop offset="0%"   stop-color="#8fd45c"/>
+                        <stop offset="55%"  stop-color="#5fa83f"/>
+                        <stop offset="100%" stop-color="#3d7a28"/>
+                    </radialGradient>
+                    <!-- 树干渐变 -->
+                    <linearGradient id="trunkGrad" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%"   stop-color="#4d2812"/>
+                        <stop offset="40%"  stop-color="#8b5226"/>
+                        <stop offset="100%" stop-color="#6b3a1d"/>
+                    </linearGradient>
+                    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#00000033"/>
+                    </filter>
+                </defs>
+
+                <!-- ═══════════════════════════════ 背景 ═══════════════════════════════ -->
+                <!-- 天空 -->
+                <rect width="960" height="600" fill="url(#skyGrad)"/>
+                <!-- 草地 -->
+                <path d="M0 430 Q240 400 480 418 Q720 436 960 415 L960 600 L0 600 Z"
+                      fill="url(#grassGrad)"/>
+                <!-- 草地高光条 -->
+                <path d="M0 430 Q240 400 480 418 Q720 436 960 415"
+                      fill="none" stroke="#a8e075" stroke-width="3" opacity="0.5"/>
+
+                <!-- ═══════════════════════════════ 太阳 ═══════════════════════════════ -->
+                <!-- 光晕 -->
+                <circle cx="82" cy="78" r="64" fill="url(#sunGlow)" opacity="0.5"/>
+                <!-- 光芒（动态感：长短交替） -->
+                <g stroke="#ffd84d" stroke-linecap="round" opacity="0.9">
+                    <line x1="82" y1="2"  x2="82" y2="18"  stroke-width="4"/>
+                    <line x1="82" y1="138" x2="82" y2="154" stroke-width="4"/>
+                    <line x1="8"  y1="78" x2="-8" y2="78"  stroke-width="4"/>
+                    <line x1="156" y1="78" x2="172" y2="78" stroke-width="4"/>
+                    <line x1="128" y1="28" x2="140" y2="16" stroke-width="4"/>
+                    <line x1="36"  y1="28" x2="24"  y2="16" stroke-width="4"/>
+                    <line x1="128" y1="128" x2="140" y2="140" stroke-width="4"/>
+                    <line x1="36"  y1="128" x2="24"  y2="140" stroke-width="4"/>
+                    <!-- 次级光芒 -->
+                    <line x1="116" y1="12" x2="122" y2="4"  stroke-width="2.5"/>
+                    <line x1="48"  y1="12" x2="42"  y2="4"  stroke-width="2.5"/>
+                    <line x1="146" y1="42" x2="154" y2="36" stroke-width="2.5"/>
+                    <line x1="18"  y1="42" x2="10"  y2="36" stroke-width="2.5"/>
+                    <line x1="146" y1="114" x2="154" y2="120" stroke-width="2.5"/>
+                    <line x1="18"  y1="114" x2="10"  y2="120" stroke-width="2.5"/>
+                </g>
+                <!-- 太阳主体（双层，内亮外柔） -->
+                <circle cx="82" cy="78" r="38" fill="#ffed6a"/>
+                <circle cx="82" cy="78" r="32" fill="#ffe84d"/>
+                <!-- 可爱的笑脸 -->
+                <circle cx="72" cy="72" r="3.5" fill="#f0a500"/>
+                <circle cx="92" cy="72" r="3.5" fill="#f0a500"/>
+                <path d="M 70 84 Q 82 94 94 84" stroke="#f0a500" stroke-width="3"
+                      fill="none" stroke-linecap="round"/>
+                <!-- 腮红 -->
+                <ellipse cx="66" cy="82" rx="5" ry="3" fill="#ffb347" opacity="0.5"/>
+                <ellipse cx="98" cy="82" rx="5" ry="3" fill="#ffb347" opacity="0.5"/>
+
+                <!-- ═══════════════════════════════ 云朵 ═══════════════════════════════ -->
+                <!-- 云 1（左侧大云） -->
+                <g filter="url(#softShadow)">
+                    <g fill="#ffffff">
+                        <circle cx="200" cy="95"  r="26"/>
+                        <circle cx="232" cy="82"  r="32"/>
+                        <circle cx="268" cy="88"  r="24"/>
+                        <circle cx="248" cy="105" r="22"/>
+                        <circle cx="214" cy="108" r="20"/>
+                    </g>
+                    <!-- 底部遮盖让云底平整 -->
+                    <rect x="180" y="100" width="112" height="20" fill="#ffffff"/>
+                </g>
+                <!-- 云 1 高光 -->
+                <circle cx="228" cy="78" r="12" fill="#ffffff" opacity="0.6"/>
+
+                <!-- 云 2（右侧小云） -->
+                <g filter="url(#softShadow)">
+                    <g fill="#f0faff">
+                        <circle cx="760" cy="80"  r="20"/>
+                        <circle cx="786" cy="68"  r="25"/>
+                        <circle cx="814" cy="74"  r="19"/>
+                        <circle cx="800" cy="90"  r="18"/>
+                        <circle cx="772" cy="93"  r="17"/>
+                    </g>
+                    <rect x="742" y="88" width="90" height="16" fill="#f0faff"/>
+                </g>
+
+                <!-- 鸟（更精致，三只） -->
+                <g fill="none" stroke="#2c3e50" stroke-linecap="round">
+                    <path d="M 335 52 C 340 44 348 44 353 52" stroke-width="2.5"/>
+                    <path d="M 353 52 C 358 44 366 44 371 52" stroke-width="2.5"/>
+                    <path d="M 680 72 C 684 65 691 65 695 72" stroke-width="2.5"/>
+                    <path d="M 695 72 C 699 65 706 65 710 72" stroke-width="2.5"/>
+                    <path d="M 858 50 C 862 44 867 44 871 50" stroke-width="2"/>
+                    <path d="M 871 50 C 875 44 880 44 884 50" stroke-width="2"/>
+                </g>
+
+                <!-- ═══════════════════════════════ 大树 ═══════════════════════════════ -->
+                <!-- 树冠阴影 -->
+                <ellipse cx="484" cy="300" rx="310" ry="205" fill="#2e6b1a" opacity="0.3"/>
+
+                <!-- 树冠主体（有机轮廓 path） -->
+                <path d="
+                    M 480 50
+                    C 390 42, 270 80,  220 155
+                    C 165 148, 118 188, 128 248
+                    C  88 268,  72 318, 100 362
+                    C  78 400, 100 448, 155 455
+                    C 172 492, 230 508, 288 492
+                    C 325 520, 400 526, 480 522
+                    C 560 526, 635 520, 672 492
+                    C 730 508, 788 492, 805 455
+                    C 860 448, 882 400, 860 362
+                    C 888 318, 872 268, 832 248
+                    C 842 188, 795 148, 740 155
+                    C 690  80, 570  42, 480  50 Z"
+                    fill="url(#leafGrad)" filter="url(#softShadow)"/>
+
+                <!-- 树冠次层（左侧鼓包） -->
+                <path d="
+                    M 175 200
+                    C 130 210, 100 250, 118 300
+                    C  90 320,  88 360, 115 385
+                    C 108 410, 125 445, 162 450
+                    C 175 470, 210 480, 248 465
+                    C 240 430, 235 390, 248 355
+                    C 225 320, 220 275, 248 245
+                    C 225 225, 200 210, 175 200 Z"
+                    fill="#6db84a" opacity="0.7"/>
+
+                <!-- 树冠次层（右侧鼓包） -->
+                <path d="
+                    M 785 200
+                    C 830 210, 860 250, 842 300
+                    C 870 320, 872 360, 845 385
+                    C 852 410, 835 445, 798 450
+                    C 785 470, 750 480, 712 465
+                    C 720 430, 725 390, 712 355
+                    C 735 320, 740 275, 712 245
+                    C 735 225, 760 210, 785 200 Z"
+                    fill="#6db84a" opacity="0.7"/>
+
+                <!-- 树冠高光（左上） -->
+                <path d="
+                    M 480 62
+                    C 410 58, 310 90, 270 155
+                    C 230 160, 200 195, 205 230
+                    C 240 200, 290 175, 340 165
+                    C 388 135, 440 110, 480 108 Z"
+                    fill="#9ed864" opacity="0.6"/>
+
+                <!-- 树冠高光（右上） -->
+                <path d="
+                    M 480 62
+                    C 550 58, 650 90, 690 155
+                    C 730 160, 760 195, 755 230
+                    C 720 200, 670 175, 620 165
+                    C 572 135, 520 110, 480 108 Z"
+                    fill="#9ed864" opacity="0.4"/>
+
+                <!-- 叶片细节 -->
+                <g opacity="0.55">
+                    <g fill="#3d8a28">
+                        <ellipse cx="175" cy="230" rx="10" ry="4" transform="rotate(-40 175 230)"/>
+                        <ellipse cx="210" cy="195" rx="10" ry="4" transform="rotate(-20 210 195)"/>
+                        <ellipse cx="280" cy="165" rx="10" ry="4" transform="rotate(10 280 165)"/>
+                        <ellipse cx="370" cy="145" rx="10" ry="4" transform="rotate(-5 370 145)"/>
+                        <ellipse cx="590" cy="145" rx="10" ry="4" transform="rotate(8 590 145)"/>
+                        <ellipse cx="680" cy="165" rx="10" ry="4" transform="rotate(-12 680 165)"/>
+                        <ellipse cx="750" cy="195" rx="10" ry="4" transform="rotate(22 750 195)"/>
+                        <ellipse cx="785" cy="230" rx="10" ry="4" transform="rotate(42 785 230)"/>
+                        <ellipse cx="160" cy="340" rx="10" ry="4" transform="rotate(60 160 340)"/>
+                        <ellipse cx="800" cy="340" rx="10" ry="4" transform="rotate(-60 800 340)"/>
+                        <ellipse cx="185" cy="420" rx="10" ry="4" transform="rotate(30 185 420)"/>
+                        <ellipse cx="775" cy="420" rx="10" ry="4" transform="rotate(-30 775 420)"/>
+                    </g>
+                    <g fill="#82c840">
+                        <ellipse cx="350" cy="162" rx="8" ry="3" transform="rotate(-15 350 162)"/>
+                        <ellipse cx="430" cy="145" rx="8" ry="3" transform="rotate(5 430 145)"/>
+                        <ellipse cx="530" cy="150" rx="8" ry="3" transform="rotate(-8 530 150)"/>
+                        <ellipse cx="620" cy="168" rx="8" ry="3" transform="rotate(18 620 168)"/>
+                        <ellipse cx="250" cy="300" rx="8" ry="3" transform="rotate(35 250 300)"/>
+                        <ellipse cx="710" cy="300" rx="8" ry="3" transform="rotate(-35 710 300)"/>
+                        <ellipse cx="300" cy="440" rx="8" ry="3" transform="rotate(20 300 440)"/>
+                        <ellipse cx="660" cy="440" rx="8" ry="3" transform="rotate(-20 660 440)"/>
+                    </g>
+                </g>
+
+                <!-- 树干 -->
+                <path d="
+                    M 452 510 C 448 548, 440 574, 425 598
+                    L 535 598
+                    C 520 574, 512 548, 508 510 Z"
+                    fill="url(#trunkGrad)"/>
+                <!-- 树干纹理 -->
+                <g stroke="#3d1e0a" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.5">
+                    <path d="M 462 518 Q 468 548 461 578"/>
+                    <path d="M 480 514 Q 481 550 480 582"/>
+                    <path d="M 498 518 Q 493 548 499 578"/>
+                </g>
+                <!-- 树根 -->
+                <path d="M 425 598 C 400 596, 380 600, 360 598 L 360 600 L 600 600 L 600 598
+                         C 580 600, 560 596, 535 598 Z" fill="#3d1e0a" opacity="0.4"/>
+                <ellipse cx="480" cy="598" rx="78" ry="6" fill="#3d1e0a" opacity="0.25"/>
+
+                <!-- ═══════════════════════════════ 树枝连线 ═══════════════════════════════ -->
+                <!--
+                  节点中心（960×600）：
+                  爷爷  left=32% → x=307  top=28% → y=168
+                  奶奶  left=44% → x=422  top=28% → y=168
+                  公公  left=56% → x=538  top=28% → y=168
+                  阿婆  left=68% → x=653  top=28% → y=168
+                  爸爸  left=38% → x=365  top=54% → y=324
+                  妈妈  left=62% → x=595  top=54% → y=324
+                  小塔  left=50% → x=480  top=76% → y=456
+                -->
+                <g stroke="#5a2e0a" stroke-linecap="round" fill="none">
+                    <!-- 爷爷 ❤ 奶奶 横线 -->
+                    <line x1="307" y1="200" x2="422" y2="200" stroke-width="4.5"/>
+                    <!-- 爷奶中点 → 爸爸 -->
+                    <path d="M 364 200 C 364 252, 365 286, 365 310" stroke-width="4.5"/>
+
+                    <!-- 公公 ❤ 阿婆 横线 -->
+                    <line x1="538" y1="200" x2="653" y2="200" stroke-width="4.5"/>
+                    <!-- 公婆中点 → 妈妈 -->
+                    <path d="M 595 200 C 595 252, 595 286, 595 310" stroke-width="4.5"/>
+
+                    <!-- 爸爸 ❤ 妈妈 横线 -->
+                    <line x1="365" y1="324" x2="595" y2="324" stroke-width="4.5"/>
+                    <!-- 爸妈中点 → 小塔 -->
+                    <path d="M 480 324 C 480 370, 480 410, 480 442" stroke-width="4.5"/>
+                </g>
+
+                <!-- ═══════════════════════════════ 草地 ═══════════════════════════════ -->
+                <!-- 小草（成丛） -->
+                <g stroke-linecap="round" fill="none">
+                    <!-- 草丛 1 -->
+                    <g stroke="#4a8a20" stroke-width="2.5">
+                        <path d="M 62 435 C 60 420, 56 412, 52 408"/>
+                        <path d="M 62 435 C 62 418, 62 408, 62 402"/>
+                        <path d="M 62 435 C 64 420, 68 412, 72 408"/>
+                    </g>
+                    <!-- 草丛 2 -->
+                    <g stroke="#5aaa28" stroke-width="2.5">
+                        <path d="M 115 428 C 113 414, 109 406, 105 402"/>
+                        <path d="M 115 428 C 115 412, 115 404, 115 398"/>
+                        <path d="M 115 428 C 117 414, 121 406, 125 402"/>
+                    </g>
+                    <!-- 草丛 3（右侧） -->
+                    <g stroke="#4a8a20" stroke-width="2.5">
+                        <path d="M 848 425 C 846 410, 842 402, 838 398"/>
+                        <path d="M 848 425 C 848 410, 848 402, 848 396"/>
+                        <path d="M 848 425 C 850 410, 854 402, 858 398"/>
+                    </g>
+                    <!-- 草丛 4 -->
+                    <g stroke="#5aaa28" stroke-width="2.5">
+                        <path d="M 900 430 C 898 416, 894 408, 890 404"/>
+                        <path d="M 900 430 C 900 414, 900 406, 900 400"/>
+                        <path d="M 900 430 C 902 416, 906 408, 910 404"/>
+                    </g>
+                </g>
+
+                <!-- ═══════════════════════════════ 蘑菇 ═══════════════════════════════ -->
+                <!-- 蘑菇 1（大，红色） -->
+                <g transform="translate(380 530)">
+                    <!-- 菌柄 -->
+                    <path d="M -7 42 C -8 30, -6 20, 0 15 C 6 20, 8 30, 7 42 Z"
+                          fill="#f5f0e0"/>
+                    <path d="M -7 42 C -8 30, -6 20, 0 15 C 6 20, 8 30, 7 42 Z"
+                          fill="none" stroke="#ddd5b8" stroke-width="1"/>
+                    <!-- 菌褶线 -->
+                    <g stroke="#ddd5b8" stroke-width="0.8" opacity="0.7">
+                        <line x1="-4" y1="20" x2="-5" y2="42"/>
+                        <line x1="4"  y1="20" x2="5"  y2="42"/>
+                    </g>
+                    <!-- 菌伞 -->
+                    <path d="M -18 18 C -18 -4, 18 -4, 18 18
+                             C 12 24, -12 24, -18 18 Z"
+                          fill="#e8372a"/>
+                    <!-- 菌伞高光 -->
+                    <path d="M -14 14 C -12 4, 0 0, 10 4 C 6 2, -4 2, -8 10 Z"
+                          fill="#f05a50" opacity="0.6"/>
+                    <!-- 白点 -->
+                    <circle cx="-4" cy="6"  r="3.5" fill="#ffffffd0"/>
+                    <circle cx="8"  cy="10" r="2.5" fill="#ffffffd0"/>
+                    <circle cx="-2" cy="15" r="2"   fill="#ffffffd0"/>
+                    <!-- 菌伞边缘高光 -->
+                    <path d="M -18 18 C -12 22, 12 22, 18 18"
+                          fill="none" stroke="#ffaaaa" stroke-width="1.5" opacity="0.5"/>
+                </g>
+
+                <!-- 蘑菇 2（小，橙色） -->
+                <g transform="translate(420 540)">
+                    <path d="M -5 30 C -5 22, -4 15, 0 12 C 4 15, 5 22, 5 30 Z"
+                          fill="#f5f0e0"/>
+                    <path d="M -13 14 C -13 -2, 13 -2, 13 14
+                             C 9 19, -9 19, -13 14 Z"
+                          fill="#e87c20"/>
+                    <path d="M -10 11 C -8 3, 0 0, 7 3 C 4 1, -4 1, -6 8 Z"
+                          fill="#f0a040" opacity="0.6"/>
+                    <circle cx="-2" cy="5"  r="2.5" fill="#ffffffd0"/>
+                    <circle cx="6"  cy="9"  r="1.8" fill="#ffffffd0"/>
+                </g>
+
+                <!-- ═══════════════════════════════ 小鹿 ═══════════════════════════════ -->
+                <g transform="translate(36 450)">
+                    <!-- 影子 -->
+                    <ellipse cx="52" cy="105" rx="42" ry="6" fill="#000" opacity="0.12"/>
+                    <!-- 尾巴 -->
+                    <ellipse cx="6" cy="64" rx="7" ry="9"
+                             fill="#d4a06a" transform="rotate(20 6 64)"/>
+                    <ellipse cx="6" cy="62" rx="4" ry="5"
+                             fill="#f5e8d4" transform="rotate(20 6 62)"/>
+                    <!-- 身体 -->
+                    <ellipse cx="50" cy="72" rx="44" ry="26" fill="#c8894a"/>
+                    <!-- 腹部（浅色） -->
+                    <ellipse cx="50" cy="76" rx="30" ry="16" fill="#e8c08a" opacity="0.7"/>
+                    <!-- 脖子 -->
+                    <path d="M 74 52 C 80 44, 84 38, 82 30 C 90 32, 94 40, 88 52 Z"
+                          fill="#c8894a"/>
+                    <!-- 头 -->
+                    <ellipse cx="88" cy="26" rx="18" ry="15" fill="#c8894a"/>
+                    <!-- 耳朵 -->
+                    <ellipse cx="74" cy="14" rx="5" ry="9"
+                             fill="#c8894a" transform="rotate(-25 74 14)"/>
+                    <ellipse cx="74" cy="14" rx="2.5" ry="5.5"
+                             fill="#e8a878" transform="rotate(-25 74 14)"/>
+                    <ellipse cx="101" cy="16" rx="4" ry="7"
+                             fill="#c8894a" transform="rotate(15 101 16)"/>
+                    <ellipse cx="101" cy="16" rx="2" ry="4"
+                             fill="#e8a878" transform="rotate(15 101 16)"/>
+                    <!-- 鹿角 -->
+                    <g stroke="#7a4a1a" stroke-width="3" stroke-linecap="round" fill="none">
+                        <path d="M 78 12 L 72 -2 M 78 12 L 64 6 M 72 -2 L 66 -10 M 72 -2 L 78 -8"/>
+                        <path d="M 100 14 L 106 0 M 100 14 L 114 8 M 106 0 L 112 -8 M 106 0 L 100 -6"/>
+                    </g>
+                    <!-- 腿（前后各两条） -->
+                    <g fill="#a86a30">
+                        <rect x="22" y="90" width="8" height="24" rx="4"/>
+                        <rect x="36" y="90" width="8" height="24" rx="4"/>
+                        <rect x="56" y="90" width="8" height="24" rx="4"/>
+                        <rect x="70" y="90" width="8" height="24" rx="4"/>
+                    </g>
+                    <!-- 蹄子 -->
+                    <g fill="#3d1e0a">
+                        <rect x="21" y="110" width="10" height="6" rx="3"/>
+                        <rect x="35" y="110" width="10" height="6" rx="3"/>
+                        <rect x="55" y="110" width="10" height="6" rx="3"/>
+                        <rect x="69" y="110" width="10" height="6" rx="3"/>
+                    </g>
+                    <!-- 眼睛 -->
+                    <circle cx="96" cy="24" r="4"   fill="#1a0e00"/>
+                    <circle cx="96" cy="24" r="2"   fill="#3a2400"/>
+                    <circle cx="97" cy="22" r="1.5" fill="#ffffff"/>
+                    <!-- 鼻子 -->
+                    <ellipse cx="104" cy="32" rx="3.5" ry="2.5" fill="#7a3a1a"/>
+                    <circle  cx="103" cy="31" r="1" fill="#ffffff" opacity="0.5"/>
+                    <!-- 腮红 -->
+                    <ellipse cx="100" cy="30" rx="4" ry="2.5" fill="#e8907a" opacity="0.45"/>
+                    <!-- 白斑 -->
+                    <g fill="#f5e8d4" opacity="0.8">
+                        <circle cx="36" cy="65" r="3.5"/>
+                        <circle cx="50" cy="72" r="3"/>
+                        <circle cx="62" cy="62" r="3.5"/>
+                        <circle cx="44" cy="78" r="2.5"/>
+                        <circle cx="58" cy="76" r="2.5"/>
+                    </g>
+                </g>
+
+                <!-- ═══════════════════════════════ 小兔 ═══════════════════════════════ -->
+                <g transform="translate(842 468)">
+                    <!-- 影子 -->
+                    <ellipse cx="38" cy="112" rx="32" ry="5" fill="#000" opacity="0.12"/>
+                    <!-- 尾巴（毛绒球） -->
+                    <circle cx="4"  cy="76" r="10" fill="#f0f0f0"/>
+                    <circle cx="4"  cy="76" r="10" fill="none" stroke="#e0e0e0" stroke-width="1"/>
+                    <!-- 毛绒感 -->
+                    <circle cx="0"  cy="72" r="5" fill="#f8f8f8"/>
+                    <circle cx="8"  cy="70" r="4" fill="#f8f8f8"/>
+                    <circle cx="2"  cy="80" r="4" fill="#f8f8f8"/>
+                    <!-- 后脚 -->
+                    <ellipse cx="58" cy="102" rx="16" ry="8" fill="#f4f4f4"/>
+                    <ellipse cx="58" cy="102" rx="16" ry="8" fill="none" stroke="#e0e0e0" stroke-width="1"/>
+                    <!-- 趾头 -->
+                    <g fill="#ece8e8">
+                        <circle cx="48" cy="107" r="3"/>
+                        <circle cx="55" cy="109" r="3"/>
+                        <circle cx="62" cy="109" r="3"/>
+                        <circle cx="69" cy="106" r="3"/>
+                    </g>
+                    <!-- 身体 -->
+                    <ellipse cx="38" cy="82" rx="30" ry="28" fill="#f6f6f6"/>
+                    <ellipse cx="38" cy="82" rx="30" ry="28" fill="none" stroke="#e4e4e4" stroke-width="1"/>
+                    <!-- 腹部 -->
+                    <ellipse cx="38" cy="88" rx="18" ry="16" fill="#fffaf5"/>
+                    <!-- 前爪 -->
+                    <ellipse cx="22" cy="102" rx="8" ry="6" fill="#f4f4f4" stroke="#e0e0e0" stroke-width="1"/>
+                    <ellipse cx="54" cy="102" rx="8" ry="6" fill="#f4f4f4" stroke="#e0e0e0" stroke-width="1"/>
+                    <!-- 趾头（前爪） -->
+                    <g fill="#ece8e8">
+                        <circle cx="18" cy="106" r="2.5"/>
+                        <circle cx="22" cy="107" r="2.5"/>
+                        <circle cx="26" cy="106" r="2.5"/>
+                        <circle cx="50" cy="106" r="2.5"/>
+                        <circle cx="54" cy="107" r="2.5"/>
+                        <circle cx="58" cy="106" r="2.5"/>
+                    </g>
+                    <!-- 头 -->
+                    <circle cx="38" cy="44" r="26" fill="#f6f6f6"/>
+                    <circle cx="38" cy="44" r="26" fill="none" stroke="#e4e4e4" stroke-width="1"/>
+                    <!-- 耳朵（长） -->
+                    <ellipse cx="24" cy="12" rx="8"  ry="18" fill="#f6f6f6" stroke="#e4e4e4" stroke-width="1" transform="rotate(-12 24 12)"/>
+                    <ellipse cx="52" cy="12" rx="8"  ry="18" fill="#f6f6f6" stroke="#e4e4e4" stroke-width="1" transform="rotate( 12 52 12)"/>
+                    <!-- 内耳（粉色） -->
+                    <ellipse cx="24" cy="12" rx="4"  ry="13" fill="#ffaac8" opacity="0.75" transform="rotate(-12 24 12)"/>
+                    <ellipse cx="52" cy="12" rx="4"  ry="13" fill="#ffaac8" opacity="0.75" transform="rotate( 12 52 12)"/>
+                    <!-- 耳朵毛茸茸高光 -->
+                    <ellipse cx="22" cy="8"  rx="2"  ry="6"  fill="#fff0f4" opacity="0.5" transform="rotate(-12 22 8)"/>
+                    <ellipse cx="50" cy="8"  rx="2"  ry="6"  fill="#fff0f4" opacity="0.5" transform="rotate( 12 50 8)"/>
+                    <!-- 眼睛 -->
+                    <circle cx="28" cy="42" r="5"   fill="#1a1200"/>
+                    <circle cx="28" cy="42" r="3"   fill="#2a2000"/>
+                    <circle cx="29" cy="40" r="1.8" fill="#ffffff"/>
+                    <circle cx="48" cy="42" r="5"   fill="#1a1200"/>
+                    <circle cx="48" cy="42" r="3"   fill="#2a2000"/>
+                    <circle cx="49" cy="40" r="1.8" fill="#ffffff"/>
+                    <!-- 腮红 -->
+                    <ellipse cx="20" cy="50" rx="6" ry="3.5" fill="#ffb3c8" opacity="0.65"/>
+                    <ellipse cx="56" cy="50" rx="6" ry="3.5" fill="#ffb3c8" opacity="0.65"/>
+                    <!-- 鼻子 -->
+                    <path d="M 35 54 Q 38 57, 41 54 Q 38 59, 35 54 Z" fill="#ff7090"/>
+                    <!-- 嘴 -->
+                    <path d="M 38 57 Q 34 62, 30 61" stroke="#3a2810" stroke-width="1.5"
+                          fill="none" stroke-linecap="round"/>
+                    <path d="M 38 57 Q 42 62, 46 61" stroke="#3a2810" stroke-width="1.5"
+                          fill="none" stroke-linecap="round"/>
+                    <!-- 胡须 -->
+                    <g stroke="#aaaaaa" stroke-width="1" stroke-linecap="round">
+                        <line x1="14" y1="52" x2="2"  y2="50"/>
+                        <line x1="14" y1="55" x2="2"  y2="56"/>
+                        <line x1="14" y1="58" x2="2"  y2="60"/>
+                        <line x1="62" y1="52" x2="74" y2="50"/>
+                        <line x1="62" y1="55" x2="74" y2="56"/>
+                        <line x1="62" y1="58" x2="74" y2="60"/>
+                    </g>
+                </g>
+
+            </svg><!-- /scene -->
+
+            <div class="title-board">✨ My Family ✨</div>
+
+            <!-- ─── 家庭成员节点 ─── -->
+            <!-- 第一层：祖辈（横向排列于树冠上部） -->
+            <div class="node grandpa">
+                <div class="photo">
+                    <img src="images/grandpa.jpg" alt="爷爷"
+                         onerror="this.parentNode.innerHTML='<span class=&quot;fallback&quot;>👴</span>'">
+                </div>
+                <div class="label">爷爷</div>
+            </div>
+            <div class="node grandma">
+                <div class="photo">
+                    <img src="images/grandma.jpg" alt="奶奶"
+                         onerror="this.parentNode.innerHTML='<span class=&quot;fallback&quot;>👵</span>'">
+                </div>
+                <div class="label">奶奶</div>
+            </div>
+            <div class="node gong">
+                <div class="photo">
+                    <img src="images/gonggong.jpg" alt="公公"
+                         onerror="this.parentNode.innerHTML='<span class=&quot;fallback&quot;>👴</span>'">
+                </div>
+                <div class="label">公公</div>
+            </div>
+            <div class="node popo">
+                <div class="photo">
+                    <img src="images/popo.jpg" alt="阿婆"
+                         onerror="this.parentNode.innerHTML='<span class=&quot;fallback&quot;>👵</span>'">
+                </div>
+                <div class="label">阿婆</div>
+            </div>
+
+            <!-- 第二层：父母 -->
+            <div class="node dad">
+                <div class="photo">
+                    <img src="images/dad.jpg" alt="爸爸"
+                         onerror="this.parentNode.innerHTML='<span class=&quot;fallback&quot;>👨</span>'">
+                </div>
+                <div class="label">爸爸</div>
+            </div>
+            <div class="node mom">
+                <div class="photo">
+                    <img src="images/mom.jpg" alt="妈妈"
+                         onerror="this.parentNode.innerHTML='<span class=&quot;fallback&quot;>👩</span>'">
+                </div>
+                <div class="label">妈妈</div>
+            </div>
+
+            <!-- 第三层：小塔 -->
+            <div class="node me">
+                <div class="photo">
+                    <img src="images/me.jpg" alt="小塔"
+                         onerror="this.parentNode.innerHTML='<span class=&quot;fallback&quot;>🧒</span>'">
+                </div>
+                <div class="label">小塔 ⭐</div>
+            </div>
+        </div><!-- /tree-canvas -->
+    </div><!-- /family-panel -->
 </section>
+
 <div class="section-title"><i class="fas fa-server"></i> 我的服务</div>
 <div class="services-grid" id="servicesGrid"></div>
 
@@ -331,6 +1030,16 @@ setInterval(updateClock, 1000);
 document.getElementById('footerYear').textContent = new Date().getFullYear();
 renderQuickLinks();
 loadServices();
+
+// ========== 家庭树折叠 ==========
+function toggleElders(btn) {
+    btn.classList.toggle("collapsed");
+    var content = btn.nextElementSibling;
+    if (content) {
+        content.classList.toggle("collapsed");
+    }
+}
+
 </script>
 </body>
 </html>
