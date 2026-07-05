@@ -105,6 +105,7 @@ body{
 .game-card:nth-child(4){animation-delay:.6s}
 .game-card:nth-child(5){animation-delay:.75s}
 .game-card:nth-child(6){animation-delay:.9s}
+.game-card:nth-child(7){animation-delay:1.05s}
 .game-card::before{
   content:"";position:absolute;top:0;left:0;right:0;height:6px;
 }
@@ -114,6 +115,7 @@ body{
 
 .game-card.tank::before{background:linear-gradient(90deg,#6b8e23,#8fbc4a)}
 .game-card.fruit::before{background:linear-gradient(90deg,#ff9800,#ffcc02)}
+.game-card.english::before{background:linear-gradient(90deg,#5c6bc0,#7986cb)}
 .game-card:hover{
   transform:translateY(-8px) scale(1.02);
   box-shadow:0 20px 60px rgba(0,0,0,.18);
@@ -132,6 +134,7 @@ body{
 
 .game-card.tank::after{background:#6b8e23}
 .game-card.fruit::after{background:#ff9800}
+.game-card.english::after{background:#5c6bc0}
 .game-card:hover::after{transform:scale(3);opacity:.1}
 
 /* 卡片图标 */
@@ -185,6 +188,17 @@ body{
 }
 .game-card.fruit .game-tag{
   background:#fff8e1;color:#ff9800;
+}
+.game-card.english .game-title{color:#3949ab}
+.game-card.english .icon-wrap{
+  background:linear-gradient(135deg,#e8eaf6,#c5cae9);
+  box-shadow:0 8px 24px rgba(92,107,192,.2);
+}
+.game-card.english:hover .icon-wrap{
+  box-shadow:0 12px 36px rgba(92,107,192,.35);
+}
+.game-card.english .game-tag{
+  background:#e8eaf6;color:#5c6bc0;
 }
 
 /* 卡片描述 */
@@ -299,9 +313,20 @@ body{
       <div class="game-desc">左右移动接住掉落的水果，<br>小心炸弹，挑战最高分！</div>
       <div class="game-tag">🧺 9个角色可选</div>
     </div>
+
+    <!-- 学英语卡片 -->
+    <div class="game-card english" onclick="goToEnglish()">
+      <div class="icon-wrap">
+        📚
+        <span class="icon-badge">🔤</span>
+      </div>
+      <div class="game-title">听音选图</div>
+      <div class="game-desc">听英文发音，点选对应图片，<br>专为幼儿练听力设计！</div>
+      <div class="game-tag">👂 300词 · 20类</div>
+    </div>
   </div>
 
-  <div class="footer-text">🍎 新游戏「接水果大作战」上线啦！ 🍊</div>
+  <div class="footer-text">👂 新游戏「听音选图」—— 听声音，点图片！ 🔊</div>
 
 </div>
 </div>
@@ -313,6 +338,7 @@ function goToSpace(){window.location.href="space.html"}
 
 function goToTank(){window.location.href="tank.html"}
 function goToFruit(){window.location.href="fruit.html"}
+function goToEnglish(){window.location.href="english.html"}
 </script>
 </body>
 </html>

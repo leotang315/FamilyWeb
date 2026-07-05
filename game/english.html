@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>👂🎧</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Comic Sans MS','Chalkboard SE',sans-serif;
+  background:linear-gradient(160deg,#fff9c4,#ffe082,#ffcc80);
+  min-height:100vh;display:flex;justify-content:center;align-items:flex-start;
+  overflow-x:hidden;overflow-y:auto;user-select:none;-webkit-tap-highlight-color:transparent;
+  padding:10px 0 36px;
+}
+#app{width:100%;max-width:720px;padding:10px}
+.page{display:none;flex-direction:column;align-items:center}
+.page.active{display:flex}
+.menu-hero{font-size:clamp(56px,14vw,88px);text-align:center;margin:8px 0 16px;line-height:1.1;animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.char-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:10px 0;width:100%;max-width:480px}
+.char-card{background:#fff;border-radius:22px;padding:10px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.1);border:4px solid transparent;transition:all .2s}
+.char-card.selected{border-color:#ff9800;background:#fff8e1;transform:scale(1.05)}
+.char-card .char-preview{width:100%;aspect-ratio:1;border-radius:50%;background:#f5f0e8;display:flex;align-items:center;justify-content:center;font-size:clamp(32px,8vw,44px);overflow:hidden}
+.char-card .char-preview img{width:100%;height:100%;object-fit:cover}
+.cat-row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:6px 0 12px;width:100%}
+.cat-btn{width:52px;height:52px;border-radius:50%;border:3px solid #ffe082;background:#fff;font-size:26px;cursor:pointer;transition:all .2s;box-shadow:0 3px 10px rgba(0,0,0,.08)}
+.cat-btn.selected{background:#ff9800;border-color:#f57c00;transform:scale(1.12);box-shadow:0 6px 16px rgba(255,152,0,.35)}
+.btn-big{border:none;border-radius:50%;cursor:pointer;font-family:inherit;transition:transform .15s,box-shadow .15s}
+.btn-big:active{transform:scale(.92)}
+.btn-start{width:80px;height:80px;font-size:38px;background:#66bb6a;color:#fff;box-shadow:0 6px 0 #388e3c,0 10px 24px rgba(76,175,80,.35);margin-top:12px}
+.btn-start:active{box-shadow:0 3px 0 #388e3c}
+.top-bar{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:640px;background:rgba(255,255,255,.92);border-radius:20px;padding:10px 14px;margin-bottom:10px;box-shadow:0 4px 14px rgba(0,0,0,.08);gap:8px}
+.avatar-sm{width:44px;height:44px;border-radius:50%;overflow:hidden;background:#f5f0e8;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;border:3px solid #ff9800}
+.avatar-sm img{width:100%;height:100%;object-fit:cover}
+.hearts{font-size:clamp(22px,5vw,28px);letter-spacing:2px}
+.dots{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;max-width:160px}
+.dots span{width:10px;height:10px;border-radius:50%;background:#ffe082;transition:background .3s,transform .3s}
+.dots span.done{background:#66bb6a;transform:scale(1.15)}
+.dots span.now{background:#ff9800;box-shadow:0 0 0 3px rgba(255,152,0,.35)}
+.ctrl-btns{display:flex;gap:6px}
+.btn-ctrl{width:44px;height:44px;font-size:20px;background:#fff;border:3px solid #ffe082;border-radius:50%;cursor:pointer;box-shadow:0 3px 0 #ffcc80}
+.btn-ctrl:active{transform:translateY(2px);box-shadow:0 1px 0 #ffcc80}
+.play-panel{width:100%;max-width:640px;background:#fff;border-radius:28px;padding:18px 14px 20px;box-shadow:0 10px 32px rgba(255,152,0,.2);border:4px solid #ffe082}
+.speak-zone{display:flex;flex-direction:column;align-items:center;margin-bottom:16px;padding:12px 0 8px;border-radius:20px;background:linear-gradient(180deg,#fffde7,#fff8e1)}
+.btn-speak{width:clamp(88px,22vw,120px);height:clamp(88px,22vw,120px);border-radius:50%;border:none;background:linear-gradient(145deg,#42a5f5,#1e88e5);font-size:clamp(44px,11vw,58px);cursor:pointer;box-shadow:0 8px 0 #1565c0,0 12px 28px rgba(33,150,243,.4);animation:pulse 2s ease-in-out infinite}
+.btn-speak:active{transform:translateY(6px);box-shadow:0 2px 0 #1565c0}
+.btn-speak.playing{animation:ring 1s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes ring{0%,100%{box-shadow:0 8px 0 #1565c0,0 0 0 0 rgba(33,150,243,.4)}50%{box-shadow:0 8px 0 #1565c0,0 0 0 16px rgba(33,150,243,0)}}
+.options-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.opt-btn{
+  aspect-ratio:1;border:4px solid #ffe082;border-radius:24px;background:#fffbf0;
+  font-size:clamp(52px,14vw,76px);cursor:pointer;transition:all .25s cubic-bezier(.175,.885,.32,1.275);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 6px 0 #ffcc80,0 8px 20px rgba(0,0,0,.06);
+}
+.opt-btn:active:not(:disabled){transform:translateY(4px);box-shadow:0 2px 0 #ffcc80}
+.opt-btn:disabled{cursor:default}
+.opt-btn.correct{border-color:#43a047;background:#e8f5e9;box-shadow:0 6px 0 #2e7d32,0 0 24px rgba(76,175,80,.45);animation:pop .4s ease}
+.opt-btn.wrong{border-color:#e53935;background:#ffebee;animation:shake .45s ease}
+.opt-btn.dim{opacity:.35;transform:scale(.95)}
+@keyframes pop{0%{transform:scale(.9)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-6px)}80%{transform:translateX(6px)}}
+.feedback-emoji{text-align:center;font-size:48px;min-height:56px;margin-top:10px;line-height:56px}
+#gameOverOverlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
+#gameOverOverlay.show{display:flex}
+.end-card{background:#fff;border-radius:36px;padding:32px 28px;text-align:center;max-width:360px;width:100%;box-shadow:0 16px 48px rgba(0,0,0,.2);animation:popIn .45s cubic-bezier(.175,.885,.32,1.275)}
+@keyframes popIn{0%{transform:scale(.4);opacity:0}100%{transform:scale(1);opacity:1}}
+.end-card .face{font-size:80px;margin-bottom:12px}
+.end-card .stars{font-size:clamp(32px,8vw,44px);letter-spacing:6px;margin:12px 0 20px;line-height:1.4}
+.end-card .best-star{font-size:36px;margin-bottom:14px;opacity:0;transform:scale(.5);transition:all .4s cubic-bezier(.175,.885,.32,1.5)}
+.end-card .best-star.show{opacity:1;transform:scale(1)}
+.end-btns{display:flex;gap:16px;justify-content:center}
+.end-btns button{width:64px;height:64px;border:none;border-radius:50%;font-size:30px;cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.15)}
+.end-btns button:active{transform:translateY(3px);box-shadow:0 2px 0 rgba(0,0,0,.15)}
+.end-btns .again{background:#66bb6a;box-shadow:0 5px 0 #388e3c}
+.end-btns .menu{background:#ffe082;box-shadow:0 5px 0 #ffca28}
+.confetti{position:fixed;pointer-events:none;font-size:28px;z-index:200;animation:fall 1.2s ease-out forwards}
+@keyframes fall{0%{opacity:1;transform:translateY(0) rotate(0)}100%{opacity:0;transform:translateY(120px) rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="menuPage" class="page active">
+    <div class="menu-hero">👂🔊</div>
+    <div class="cat-row" id="catRow"></div>
+    <div class="char-grid" id="charGrid"></div>
+    <button class="btn-big btn-start" onclick="startGame()">▶️</button>
+  </div>
+
+  <div id="gameUI" class="page">
+    <div class="top-bar">
+      <div class="avatar-sm" id="avatarSm">🐰</div>
+      <div class="hearts" id="heartsDisplay">❤️❤️❤️</div>
+      <div class="dots" id="dotsDisplay"></div>
+      <div class="ctrl-btns">
+        <button class="btn-ctrl" id="btnPause" onclick="togglePause()">⏸️</button>
+        <button class="btn-ctrl" onclick="goMenu()">🏠</button>
+      </div>
+    </div>
+
+    <div class="play-panel">
+      <div class="speak-zone">
+        <button class="btn-big btn-speak" id="btnSpeak" onclick="replayWord()">🔊</button>
+      </div>
+      <div class="options-grid" id="optionsGrid"></div>
+      <div class="feedback-emoji" id="feedbackEmoji"></div>
+    </div>
+  </div>
+
+  <div id="gameOverOverlay">
+    <div class="end-card">
+      <div class="face" id="goFace">🎉</div>
+      <div class="stars" id="goStars"></div>
+      <div class="best-star" id="goBest">🌟</div>
+      <div class="end-btns">
+        <button class="again" onclick="restartGame()">🔄</button>
+        <button class="menu" onclick="goMenu()">🏠</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var CHARS = [
+  {id:"a", em:"🐰", img:"role/beta2.JPG"},
+  {id:"b", em:"🦊", img:"role/dad.JPG"},
+  {id:"c", em:"👩", img:"role/mum.JPG"},
+  {id:"i", em:"🐶", img:"role/duggee.png"},
+  {id:"j", em:"🐙", img:"role/betty.png"},
+  {id:"k", em:"🐸", img:"role/happy.png"},
+  {id:"l", em:"🐭", img:"role/norrie.png"},
+  {id:"m", em:"🐹", img:"role/roly.png"},
+  {id:"n", em:"🦏", img:"role/tag.png"}
+];
+
+var CATS = [
+  {id:"all", em:"📦"},
+  {id:"fruit", em:"🍎"},
+  {id:"food", em:"🍞"},
+  {id:"drink", em:"🥤"},
+  {id:"animal", em:"🐶"},
+  {id:"vehicle", em:"🚗"},
+  {id:"nature", em:"🌳"},
+  {id:"home", em:"🏠"},
+  {id:"body", em:"👁️"},
+  {id:"color", em:"🎨"},
+  {id:"number", em:"🔢"},
+  {id:"daily", em:"☀️"},
+  {id:"toy", em:"🧸"},
+  {id:"clothes", em:"👕"},
+  {id:"sport", em:"⚽"},
+  {id:"school", em:"✏️"},
+  {id:"family", em:"👨‍👩‍👧"},
+  {id:"job", em:"👨‍⚕️"},
+  {id:"music", em:"🎸"},
+  {id:"shape", em:"🔷"}
+];
+
+var WORDS = [
+  {en:"apple", em:"🍎", cat:"fruit"},
+  {en:"banana", em:"🍌", cat:"fruit"},
+  {en:"orange", em:"🍊", cat:"fruit"},
+  {en:"grape", em:"🍇", cat:"fruit"},
+  {en:"watermelon", em:"🍉", cat:"fruit"},
+  {en:"strawberry", em:"🍓", cat:"fruit"},
+  {en:"peach", em:"🍑", cat:"fruit"},
+  {en:"cherry", em:"🍒", cat:"fruit"},
+  {en:"lemon", em:"🍋", cat:"fruit"},
+  {en:"pineapple", em:"🍍", cat:"fruit"},
+  {en:"mango", em:"🥭", cat:"fruit"},
+  {en:"kiwi", em:"🥝", cat:"fruit"},
+  {en:"pear", em:"🍐", cat:"fruit"},
+  {en:"coconut", em:"🥥", cat:"fruit"},
+  {en:"blueberry", em:"🫐", cat:"fruit"},
+  {en:"melon", em:"🍈", cat:"fruit"},
+  {en:"avocado", em:"🥑", cat:"fruit"},
+  {en:"olives", em:"🫒", cat:"fruit"},
+  {en:"green apple", em:"🍏", cat:"fruit"},
+  {en:"milk", em:"🥛", cat:"food"},
+  {en:"bread", em:"🍞", cat:"food"},
+  {en:"egg", em:"🥚", cat:"food"},
+  {en:"cake", em:"🎂", cat:"food"},
+  {en:"cookie", em:"🍪", cat:"food"},
+  {en:"pizza", em:"🍕", cat:"food"},
+  {en:"rice", em:"🍚", cat:"food"},
+  {en:"cheese", em:"🧀", cat:"food"},
+  {en:"ice cream", em:"🍦", cat:"food"},
+  {en:"candy", em:"🍬", cat:"food"},
+  {en:"hamburger", em:"🍔", cat:"food"},
+  {en:"hot dog", em:"🌭", cat:"food"},
+  {en:"sandwich", em:"🥪", cat:"food"},
+  {en:"noodles", em:"🍜", cat:"food"},
+  {en:"fried chicken", em:"🍗", cat:"food"},
+  {en:"carrot", em:"🥕", cat:"food"},
+  {en:"corn", em:"🌽", cat:"food"},
+  {en:"potato", em:"🥔", cat:"food"},
+  {en:"tomato", em:"🍅", cat:"food"},
+  {en:"broccoli", em:"🥦", cat:"food"},
+  {en:"soup", em:"🍲", cat:"food"},
+  {en:"salad", em:"🥗", cat:"food"},
+  {en:"steak", em:"🥩", cat:"food"},
+  {en:"sushi", em:"🍣", cat:"food"},
+  {en:"taco", em:"🌮", cat:"food"},
+  {en:"popcorn", em:"🍿", cat:"food"},
+  {en:"donut", em:"🍩", cat:"food"},
+  {en:"chocolate", em:"🍫", cat:"food"},
+  {en:"honey", em:"🍯", cat:"food"},
+  {en:"juice", em:"🧃", cat:"drink"},
+  {en:"tea", em:"🍵", cat:"drink"},
+  {en:"coffee", em:"☕", cat:"drink"},
+  {en:"soda", em:"🥤", cat:"drink"},
+  {en:"bubble tea", em:"🧋", cat:"drink"},
+  {en:"lemonade", em:"🍹", cat:"drink"},
+  {en:"coconut drink", em:"🥥", cat:"drink"},
+  {en:"water cup", em:"🚰", cat:"drink"},
+  {en:"cat", em:"🐱", cat:"animal"},
+  {en:"dog", em:"🐶", cat:"animal"},
+  {en:"bird", em:"🐦", cat:"animal"},
+  {en:"fish", em:"🐟", cat:"animal"},
+  {en:"rabbit", em:"🐰", cat:"animal"},
+  {en:"bear", em:"🐻", cat:"animal"},
+  {en:"elephant", em:"🐘", cat:"animal"},
+  {en:"lion", em:"🦁", cat:"animal"},
+  {en:"monkey", em:"🐵", cat:"animal"},
+  {en:"pig", em:"🐷", cat:"animal"},
+  {en:"cow", em:"🐮", cat:"animal"},
+  {en:"horse", em:"🐴", cat:"animal"},
+  {en:"duck", em:"🦆", cat:"animal"},
+  {en:"sheep", em:"🐑", cat:"animal"},
+  {en:"tiger", em:"🐯", cat:"animal"},
+  {en:"panda", em:"🐼", cat:"animal"},
+  {en:"frog", em:"🐸", cat:"animal"},
+  {en:"butterfly", em:"🦋", cat:"animal"},
+  {en:"bee", em:"🐝", cat:"animal"},
+  {en:"whale", em:"🐳", cat:"animal"},
+  {en:"dolphin", em:"🐬", cat:"animal"},
+  {en:"turtle", em:"🐢", cat:"animal"},
+  {en:"snake", em:"🐍", cat:"animal"},
+  {en:"fox", em:"🦊", cat:"animal"},
+  {en:"deer", em:"🦌", cat:"animal"},
+  {en:"giraffe", em:"🦒", cat:"animal"},
+  {en:"zebra", em:"🦓", cat:"animal"},
+  {en:"owl", em:"🦉", cat:"animal"},
+  {en:"penguin", em:"🐧", cat:"animal"},
+  {en:"chick", em:"🐤", cat:"animal"},
+  {en:"mouse", em:"🐭", cat:"animal"},
+  {en:"goat", em:"🐐", cat:"animal"},
+  {en:"camel", em:"🐪", cat:"animal"},
+  {en:"koala", em:"🐨", cat:"animal"},
+  {en:"bat", em:"🦇", cat:"animal"},
+  {en:"eagle", em:"🦅", cat:"animal"},
+  {en:"crab", em:"🦀", cat:"animal"},
+  {en:"lobster", em:"🦞", cat:"animal"},
+  {en:"octopus", em:"🐙", cat:"animal"},
+  {en:"shark", em:"🦈", cat:"animal"},
+  {en:"crocodile", em:"🐊", cat:"animal"},
+  {en:"rhino", em:"🦏", cat:"animal"},
+  {en:"hippo", em:"🦛", cat:"animal"},
+  {en:"wolf", em:"🐺", cat:"animal"},
+  {en:"turkey", em:"🦃", cat:"animal"},
+  {en:"snail", em:"🐌", cat:"animal"},
+  {en:"spider", em:"🕷️", cat:"animal"},
+  {en:"dinosaur", em:"🦕", cat:"animal"},
+  {en:"unicorn", em:"🦄", cat:"animal"},
+  {en:"car", em:"🚗", cat:"vehicle"},
+  {en:"bus", em:"🚌", cat:"vehicle"},
+  {en:"train", em:"🚂", cat:"vehicle"},
+  {en:"plane", em:"✈️", cat:"vehicle"},
+  {en:"boat", em:"⛵", cat:"vehicle"},
+  {en:"bicycle", em:"🚲", cat:"vehicle"},
+  {en:"truck", em:"🚚", cat:"vehicle"},
+  {en:"helicopter", em:"🚁", cat:"vehicle"},
+  {en:"rocket", em:"🚀", cat:"vehicle"},
+  {en:"taxi", em:"🚕", cat:"vehicle"},
+  {en:"ship", em:"🚢", cat:"vehicle"},
+  {en:"motorcycle", em:"🏍️", cat:"vehicle"},
+  {en:"ambulance", em:"🚑", cat:"vehicle"},
+  {en:"fire truck", em:"🚒", cat:"vehicle"},
+  {en:"police car", em:"🚓", cat:"vehicle"},
+  {en:"tractor", em:"🚜", cat:"vehicle"},
+  {en:"subway", em:"🚇", cat:"vehicle"},
+  {en:"scooter", em:"🛴", cat:"vehicle"},
+  {en:"tree", em:"🌳", cat:"nature"},
+  {en:"flower", em:"🌸", cat:"nature"},
+  {en:"rain", em:"🌧️", cat:"nature"},
+  {en:"cloud", em:"☁️", cat:"nature"},
+  {en:"snow", em:"❄️", cat:"nature"},
+  {en:"rainbow", em:"🌈", cat:"nature"},
+  {en:"fire", em:"🔥", cat:"nature"},
+  {en:"mountain", em:"⛰️", cat:"nature"},
+  {en:"leaf", em:"🍃", cat:"nature"},
+  {en:"mushroom", em:"🍄", cat:"nature"},
+  {en:"lightning", em:"⚡", cat:"nature"},
+  {en:"ocean", em:"🌊", cat:"nature"},
+  {en:"volcano", em:"🌋", cat:"nature"},
+  {en:"tornado", em:"🌪️", cat:"nature"},
+  {en:"wind", em:"💨", cat:"nature"},
+  {en:"desert", em:"🏜️", cat:"nature"},
+  {en:"island", em:"🏝️", cat:"nature"},
+  {en:"beach", em:"🏖️", cat:"nature"},
+  {en:"sunset", em:"🌅", cat:"nature"},
+  {en:"rose", em:"🌹", cat:"nature"},
+  {en:"house", em:"🏠", cat:"home"},
+  {en:"bed", em:"🛏️", cat:"home"},
+  {en:"chair", em:"🪑", cat:"home"},
+  {en:"door", em:"🚪", cat:"home"},
+  {en:"lamp", em:"💡", cat:"home"},
+  {en:"phone", em:"📱", cat:"home"},
+  {en:"clock", em:"⏰", cat:"home"},
+  {en:"key", em:"🔑", cat:"home"},
+  {en:"bath tub", em:"🛁", cat:"home"},
+  {en:"toilet", em:"🚽", cat:"home"},
+  {en:"sofa", em:"🛋️", cat:"home"},
+  {en:"mirror", em:"🪞", cat:"home"},
+  {en:"toothbrush", em:"🪥", cat:"home"},
+  {en:"soap", em:"🧼", cat:"home"},
+  {en:"refrigerator", em:"🧊", cat:"home"},
+  {en:"broom", em:"🧹", cat:"home"},
+  {en:"eye", em:"👁️", cat:"body"},
+  {en:"ear", em:"👂", cat:"body"},
+  {en:"nose", em:"👃", cat:"body"},
+  {en:"mouth", em:"👄", cat:"body"},
+  {en:"hand", em:"✋", cat:"body"},
+  {en:"foot", em:"🦶", cat:"body"},
+  {en:"heart", em:"❤️", cat:"body"},
+  {en:"tooth", em:"🦷", cat:"body"},
+  {en:"arm", em:"💪", cat:"body"},
+  {en:"leg", em:"🦵", cat:"body"},
+  {en:"tongue", em:"👅", cat:"body"},
+  {en:"hair", em:"💇", cat:"body"},
+  {en:"face", em:"🙂", cat:"body"},
+  {en:"finger", em:"☝️", cat:"body"},
+  {en:"red", em:"🔴", cat:"color"},
+  {en:"blue", em:"🔵", cat:"color"},
+  {en:"green", em:"🟢", cat:"color"},
+  {en:"yellow", em:"🟡", cat:"color"},
+  {en:"purple", em:"🟣", cat:"color"},
+  {en:"pink", em:"🩷", cat:"color"},
+  {en:"black", em:"⚫", cat:"color"},
+  {en:"white", em:"⚪", cat:"color"},
+  {en:"orange color", em:"🟠", cat:"color"},
+  {en:"brown", em:"🟤", cat:"color"},
+  {en:"one", em:"1️⃣", cat:"number"},
+  {en:"two", em:"2️⃣", cat:"number"},
+  {en:"three", em:"3️⃣", cat:"number"},
+  {en:"four", em:"4️⃣", cat:"number"},
+  {en:"five", em:"5️⃣", cat:"number"},
+  {en:"six", em:"6️⃣", cat:"number"},
+  {en:"seven", em:"7️⃣", cat:"number"},
+  {en:"eight", em:"8️⃣", cat:"number"},
+  {en:"nine", em:"9️⃣", cat:"number"},
+  {en:"ten", em:"🔟", cat:"number"},
+  {en:"hello", em:"👋", cat:"daily"},
+  {en:"goodbye", em:"🖐️", cat:"daily"},
+  {en:"thank you", em:"🙏", cat:"daily"},
+  {en:"please", em:"🤲", cat:"daily"},
+  {en:"sorry", em:"😔", cat:"daily"},
+  {en:"yes", em:"👍", cat:"daily"},
+  {en:"no", em:"👎", cat:"daily"},
+  {en:"love", em:"💕", cat:"daily"},
+  {en:"happy", em:"😊", cat:"daily"},
+  {en:"sad", em:"😢", cat:"daily"},
+  {en:"sleep", em:"😴", cat:"daily"},
+  {en:"school", em:"🏫", cat:"daily"},
+  {en:"book", em:"📖", cat:"daily"},
+  {en:"water", em:"💧", cat:"daily"},
+  {en:"sun", em:"☀️", cat:"daily"},
+  {en:"moon", em:"🌙", cat:"daily"},
+  {en:"star", em:"⭐", cat:"daily"},
+  {en:"friend", em:"🤝", cat:"daily"},
+  {en:"baby", em:"👶", cat:"daily"},
+  {en:"music", em:"🎵", cat:"daily"},
+  {en:"angry", em:"😠", cat:"daily"},
+  {en:"scared", em:"😱", cat:"daily"},
+  {en:"laugh", em:"😂", cat:"daily"},
+  {en:"party", em:"🎉", cat:"daily"},
+  {en:"ball", em:"⚽", cat:"toy"},
+  {en:"balloon", em:"🎈", cat:"toy"},
+  {en:"kite", em:"🪁", cat:"toy"},
+  {en:"doll", em:"🪆", cat:"toy"},
+  {en:"puzzle", em:"🧩", cat:"toy"},
+  {en:"teddy bear", em:"🧸", cat:"toy"},
+  {en:"robot", em:"🤖", cat:"toy"},
+  {en:"gift", em:"🎁", cat:"toy"},
+  {en:"dice", em:"🎲", cat:"toy"},
+  {en:"cards", em:"🃏", cat:"toy"},
+  {en:"video game", em:"🎮", cat:"toy"},
+  {en:"camera", em:"📷", cat:"toy"},
+  {en:"hat", em:"🎩", cat:"clothes"},
+  {en:"cap", em:"🧢", cat:"clothes"},
+  {en:"shoe", em:"👟", cat:"clothes"},
+  {en:"boot", em:"👢", cat:"clothes"},
+  {en:"sock", em:"🧦", cat:"clothes"},
+  {en:"dress", em:"👗", cat:"clothes"},
+  {en:"shirt", em:"👕", cat:"clothes"},
+  {en:"pants", em:"👖", cat:"clothes"},
+  {en:"coat", em:"🧥", cat:"clothes"},
+  {en:"scarf", em:"🧣", cat:"clothes"},
+  {en:"umbrella", em:"☂️", cat:"clothes"},
+  {en:"glasses", em:"👓", cat:"clothes"},
+  {en:"watch", em:"⌚", cat:"clothes"},
+  {en:"basketball", em:"🏀", cat:"sport"},
+  {en:"baseball", em:"⚾", cat:"sport"},
+  {en:"tennis", em:"🎾", cat:"sport"},
+  {en:"golf", em:"⛳", cat:"sport"},
+  {en:"volleyball", em:"🏐", cat:"sport"},
+  {en:"swimming", em:"🏊", cat:"sport"},
+  {en:"running", em:"🏃", cat:"sport"},
+  {en:"skiing", em:"⛷️", cat:"sport"},
+  {en:"skating", em:"⛸️", cat:"sport"},
+  {en:"surfing", em:"🏄", cat:"sport"},
+  {en:"fishing", em:"🎣", cat:"sport"},
+  {en:"boxing", em:"🥊", cat:"sport"},
+  {en:"cycling", em:"🚴", cat:"sport"},
+  {en:"pencil", em:"✏️", cat:"school"},
+  {en:"pen", em:"🖊️", cat:"school"},
+  {en:"eraser", em:"🧽", cat:"school"},
+  {en:"ruler", em:"📏", cat:"school"},
+  {en:"scissors", em:"✂️", cat:"school"},
+  {en:"notebook", em:"📓", cat:"school"},
+  {en:"backpack", em:"🎒", cat:"school"},
+  {en:"globe", em:"🌍", cat:"school"},
+  {en:"library", em:"📚", cat:"school"},
+  {en:"graduation", em:"🎓", cat:"school"},
+  {en:"mother", em:"👩", cat:"family"},
+  {en:"father", em:"👨", cat:"family"},
+  {en:"sister", em:"👧", cat:"family"},
+  {en:"brother", em:"👦", cat:"family"},
+  {en:"grandma", em:"👵", cat:"family"},
+  {en:"grandpa", em:"👴", cat:"family"},
+  {en:"family", em:"👨‍👩‍👧", cat:"family"},
+  {en:"child", em:"🧒", cat:"family"},
+  {en:"doctor", em:"🩺", cat:"job"},
+  {en:"nurse", em:"💉", cat:"job"},
+  {en:"teacher", em:"👩‍🏫", cat:"job"},
+  {en:"police", em:"👮", cat:"job"},
+  {en:"firefighter", em:"🧑‍🚒", cat:"job"},
+  {en:"chef", em:"👨‍🍳", cat:"job"},
+  {en:"farmer", em:"👨‍🌾", cat:"job"},
+  {en:"pilot", em:"👨‍✈️", cat:"job"},
+  {en:"astronaut", em:"👨‍🚀", cat:"job"},
+  {en:"artist", em:"🎨", cat:"job"},
+  {en:"builder", em:"👷", cat:"job"},
+  {en:"piano", em:"🎹", cat:"music"},
+  {en:"guitar", em:"🎸", cat:"music"},
+  {en:"drum", em:"🥁", cat:"music"},
+  {en:"violin", em:"🎻", cat:"music"},
+  {en:"trumpet", em:"🎺", cat:"music"},
+  {en:"saxophone", em:"🎷", cat:"music"},
+  {en:"microphone", em:"🎤", cat:"music"},
+  {en:"headphones", em:"🎧", cat:"music"},
+  {en:"circle", em:"⭕", cat:"shape"},
+  {en:"square", em:"🟧", cat:"shape"},
+  {en:"triangle", em:"🔺", cat:"shape"},
+  {en:"diamond", em:"💎", cat:"shape"},
+  {en:"heart shape", em:"💟", cat:"shape"},
+  {en:"star shape", em:"🌟", cat:"shape"},
+  {en:"moon shape", em:"🌛", cat:"shape"},
+  {en:"plus", em:"➕", cat:"shape"}
+];
+
+var TOTAL_Q = 8;
+var sel = null, selCat = "all", charIdx = 0;
+var lives, qIndex, correctCount, startBest, bestStars;
+var pool = [], currentQ = null, answering = false, paused = false;
+var audioCtx = null;
+
+function unlockAudio(){
+  if(!audioCtx){ try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){} }
+  if(audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+}
+function playTone(freq, dur, type, vol){
+  if(!audioCtx) return;
+  try{
+    var osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+    osc.type = type || "sine"; osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol || 0.3, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + dur);
+  }catch(e){}
+}
+function playCorrect(){
+  playTone(523, 0.1, "sine", 0.32);
+  setTimeout(function(){ playTone(659, 0.1, "sine", 0.32); }, 90);
+  setTimeout(function(){ playTone(784, 0.15, "sine", 0.34); }, 180);
+}
+function playWrong(){
+  playTone(200, 0.25, "sawtooth", 0.28);
+  setTimeout(function(){ playTone(150, 0.3, "sawtooth", 0.24); }, 120);
+}
+function playTap(){ playTone(600, 0.06, "sine", 0.2); }
+function playWin(){
+  [523,659,784,1047].forEach(function(f,i){
+    setTimeout(function(){ playTone(f, 0.14, "sine", 0.3); }, i * 120);
+  });
+}
+function playStart(){
+  playTone(440, 0.12, "sine", 0.28);
+  setTimeout(function(){ playTone(554, 0.15, "sine", 0.3); }, 100);
+}
+
+document.addEventListener("click", unlockAudio, {once:false});
+document.addEventListener("touchstart", unlockAudio, {once:false, passive:true});
+
+function speakWord(text, cb){
+  if(!window.speechSynthesis){ if(cb) cb(); return; }
+  var btn = document.getElementById("btnSpeak");
+  if(btn) btn.classList.add("playing");
+  var u = new SpeechSynthesisUtterance(text);
+  u.lang = "en-US";
+  u.rate = 1;
+  u.pitch = 1;
+  u.onend = u.onerror = function(){
+    if(btn) btn.classList.remove("playing");
+    if(cb) cb();
+  };
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+
+function replayWord(){
+  if(currentQ && !paused) speakWord(currentQ.word.en);
+}
+
+function getPool(){
+  if(selCat === "all") return WORDS.slice();
+  return WORDS.filter(function(w){ return w.cat === selCat; });
+}
+
+function shuffle(arr){
+  var a = arr.slice();
+  for(var i = a.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  return a;
+}
+
+function buildQuestion(word){
+  var usedEm = {};
+  usedEm[word.em] = true;
+  var wrong = shuffle(pool.filter(function(w){
+    return w !== word && w.en !== word.en && !usedEm[w.em];
+  }));
+  for(var i = 0; i < wrong.length; i++) usedEm[wrong[i].em] = true;
+  wrong = wrong.slice(0, 3);
+  var fallback = shuffle(WORDS.filter(function(w){
+    return w !== word && w.en !== word.en && !usedEm[w.em];
+  }));
+  for(var j = 0; wrong.length < 3 && j < fallback.length; j++){
+    wrong.push(fallback[j]);
+    usedEm[fallback[j].em] = true;
+  }
+  while(wrong.length < 3){
+    var extra = WORDS[Math.floor(Math.random() * WORDS.length)];
+    if(extra !== word && extra.en !== word.en && !usedEm[extra.em]){
+      wrong.push(extra);
+      usedEm[extra.em] = true;
+    }
+  }
+  return { word: word, options: shuffle([word].concat(wrong)) };
+}
+
+function buildCharGrid(){
+  var grid = document.getElementById("charGrid");
+  grid.innerHTML = "";
+  for(var i = 0; i < CHARS.length; i++){
+    (function(ch, idx){
+      var card = document.createElement("div");
+      card.className = "char-card";
+      var preview = document.createElement("div");
+      preview.className = "char-preview";
+      if(ch.img){
+        var imgEl = document.createElement("img");
+        imgEl.src = ch.img;
+        imgEl.onerror = function(){ preview.textContent = ch.em; imgEl.remove(); };
+        preview.appendChild(imgEl);
+      } else preview.textContent = ch.em;
+      card.appendChild(preview);
+      card.onclick = function(){ playTap(); selectChar(idx); };
+      grid.appendChild(card);
+      if(idx === 0){ card.classList.add("selected"); sel = ch; }
+    })(CHARS[i], i);
+  }
+}
+
+function buildCatRow(){
+  var row = document.getElementById("catRow");
+  row.innerHTML = "";
+  for(var i = 0; i < CATS.length; i++){
+    (function(c){
+      var btn = document.createElement("button");
+      btn.className = "cat-btn" + (c.id === selCat ? " selected" : "");
+      btn.textContent = c.em;
+      btn.onclick = function(){ playTap(); selCat = c.id; buildCatRow(); };
+      row.appendChild(btn);
+    })(CATS[i]);
+  }
+}
+
+function selectChar(idx){
+  charIdx = idx; sel = CHARS[idx];
+  var cards = document.querySelectorAll(".char-grid .char-card");
+  for(var k = 0; k < cards.length; k++) cards[k].classList.toggle("selected", k === idx);
+}
+
+function setAvatar(el, ch){
+  el.innerHTML = "";
+  if(ch.img){
+    var img = document.createElement("img");
+    img.src = ch.img;
+    img.onerror = function(){ el.textContent = ch.em; };
+    el.appendChild(img);
+  } else el.textContent = ch.em;
+}
+
+function renderDots(){
+  var box = document.getElementById("dotsDisplay");
+  box.innerHTML = "";
+  for(var i = 0; i < TOTAL_Q; i++){
+    var d = document.createElement("span");
+    if(i < qIndex) d.className = "done";
+    else if(i === qIndex) d.className = "now";
+    box.appendChild(d);
+  }
+}
+
+function renderHearts(){
+  var s = "";
+  for(var i = 0; i < 3; i++) s += i < lives ? "❤️" : "🖤";
+  document.getElementById("heartsDisplay").textContent = s;
+}
+
+function spawnConfetti(x, y){
+  var icons = ["⭐","✨","🎉","💛","🌟"];
+  for(var i = 0; i < 8; i++){
+    var el = document.createElement("div");
+    el.className = "confetti";
+    el.textContent = icons[Math.floor(Math.random() * icons.length)];
+    el.style.left = (x + (Math.random() - 0.5) * 80) + "px";
+    el.style.top = y + "px";
+    document.body.appendChild(el);
+    setTimeout(function(e){ return function(){ e.remove(); }; }(el), 1300);
+  }
+}
+
+function startGame(){
+  unlockAudio();
+  if(!sel) sel = CHARS[0];
+  pool = getPool();
+  if(pool.length < 4){ selCat = "all"; pool = getPool(); buildCatRow(); }
+  bestStars = parseInt(localStorage.getItem("listenBest") || "0", 10);
+  startBest = bestStars;
+  lives = 3; qIndex = 0; correctCount = 0; paused = false;
+  setAvatar(document.getElementById("avatarSm"), sel);
+  document.getElementById("menuPage").classList.remove("active");
+  document.getElementById("gameUI").classList.add("active");
+  document.getElementById("gameOverOverlay").classList.remove("show");
+  document.getElementById("btnPause").textContent = "⏸️";
+  document.getElementById("feedbackEmoji").textContent = "";
+  playStart();
+  renderHearts();
+  nextQuestion();
+}
+
+function goMenu(){
+  speechSynthesis.cancel();
+  document.getElementById("gameOverOverlay").classList.remove("show");
+  document.getElementById("gameUI").classList.remove("active");
+  document.getElementById("menuPage").classList.add("active");
+  paused = false;
+}
+
+function restartGame(){ startGame(); }
+
+function togglePause(){
+  paused = !paused;
+  document.getElementById("btnPause").textContent = paused ? "▶️" : "⏸️";
+  if(paused) speechSynthesis.cancel();
+  else if(currentQ) speakWord(currentQ.word.en);
+}
+
+function nextQuestion(){
+  if(lives <= 0){ finishGame(false); return; }
+  if(qIndex >= TOTAL_Q){ finishGame(true); return; }
+  answering = false;
+  document.getElementById("feedbackEmoji").textContent = "";
+  renderDots();
+
+  var word = pool[Math.floor(Math.random() * pool.length)];
+  currentQ = buildQuestion(word);
+  renderOptions();
+
+  setTimeout(function(){
+    if(!paused) speakWord(currentQ.word.en);
+  }, 400);
+}
+
+function renderOptions(){
+  var grid = document.getElementById("optionsGrid");
+  grid.innerHTML = "";
+  for(var i = 0; i < currentQ.options.length; i++){
+    (function(w){
+      var b = document.createElement("button");
+      b.className = "opt-btn";
+      b.textContent = w.em;
+      b.onclick = function(e){ pickAnswer(w, b, e); };
+      grid.appendChild(b);
+    })(currentQ.options[i]);
+  }
+}
+
+function pickAnswer(word, btn, e){
+  if(answering || paused) return;
+  answering = true;
+  var correct = word === currentQ.word;
+  var buttons = document.querySelectorAll(".opt-btn");
+
+  for(var i = 0; i < buttons.length; i++){
+    buttons[i].disabled = true;
+    var w = currentQ.options[i];
+    if(w === currentQ.word) buttons[i].classList.add("correct");
+    else if(buttons[i] === btn && !correct) buttons[i].classList.add("wrong");
+    else buttons[i].classList.add("dim");
+  }
+
+  if(correct){
+    correctCount++;
+    playCorrect();
+    document.getElementById("feedbackEmoji").textContent = "🎉";
+    if(e){
+      var rect = btn.getBoundingClientRect();
+      spawnConfetti(rect.left + rect.width / 2, rect.top);
+    }
+    speakWord(currentQ.word.en, function(){});
+    setTimeout(advance, 1600);
+  } else {
+    lives--;
+    playWrong();
+    document.getElementById("feedbackEmoji").textContent = "😢";
+    renderHearts();
+    setTimeout(advance, 2000);
+  }
+}
+
+function advance(){
+  qIndex++;
+  renderDots();
+  nextQuestion();
+}
+
+function finishGame(completed){
+  var isNew = correctCount > startBest;
+  if(isNew){
+    localStorage.setItem("listenBest", correctCount);
+    playWin();
+  }
+  document.getElementById("goFace").textContent = completed ? "🎉" : (correctCount >= 4 ? "😊" : "💪");
+  var stars = "";
+  for(var i = 0; i < TOTAL_Q; i++) stars += i < correctCount ? "⭐" : "☆";
+  document.getElementById("goStars").textContent = stars;
+  var bestEl = document.getElementById("goBest");
+  bestEl.classList.toggle("show", isNew);
+  bestEl.textContent = isNew ? "🌟" : "";
+  document.getElementById("gameOverOverlay").classList.add("show");
+}
+
+buildCharGrid();
+buildCatRow();
+</script>
+</body>
+</html>
