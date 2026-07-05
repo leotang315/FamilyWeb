@@ -388,21 +388,53 @@ function unlockAudio(){
   if(!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
   if(audioCtx && audioCtx.state==='suspended') audioCtx.resume();
 }
-function tone(f,d,t,v){
+function tone(f,d,t,v,at){
   if(!audioCtx) return;
   try{
+    const t0=at!=null?at:audioCtx.currentTime;
     const o=audioCtx.createOscillator(), g=audioCtx.createGain();
     o.type=t||'square'; o.frequency.value=f;
-    g.gain.setValueAtTime(v||0.15,audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+d);
-    o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+d);
+    g.gain.setValueAtTime(v||0.15,t0);
+    g.gain.exponentialRampToValueAtTime(0.001,t0+d);
+    o.connect(g); g.connect(audioCtx.destination); o.start(t0); o.stop(t0+d+0.01);
   }catch(e){}
 }
-const sShoot=()=>tone(880,0.06,'square',0.12);
+const sShoot=()=>tone(880,0.04,'square',0.11);
 const sHit=()=>tone(220,0.08,'sawtooth',0.15);
 const sExplode=()=>{tone(120,0.15,'sawtooth',0.2);setTimeout(()=>tone(80,0.2,'sawtooth',0.15),80);};
 const sPower=()=>{tone(660,0.08,'sine',0.18);setTimeout(()=>tone(990,0.1,'sine',0.18),70);};
-const sStart=()=>[440,554,659].forEach((f,i)=>setTimeout(()=>tone(f,0.12,'square',0.15),i*100));
+/* FC Battle City 关卡开场曲（还原 BGM_SQ1 / TRI / SQ2 主旋律） */
+function sStageStart(){
+  if(!audioCtx) return;
+  const t0=audioCtx.currentTime+0.04;
+  const lead=[
+    [523.25,0.09,0.10],[587.33,0.09,0.10],[622.25,0.09,0.10],
+    [622.25,0.09,0.10],[698.46,0.09,0.10],[783.99,0.09,0.10],
+    [698.46,0.09,0.10],[783.99,0.09,0.10],[830.61,0.09,0.10],
+    [830.61,0.09,0.10],[932.33,0.09,0.10],[1046.50,0.09,0.10],
+    [1046.50,0.09,0.10],[1046.50,0.09,0.10],[1046.50,0.09,0.10],
+    [783.99,0.09,0.10],[698.46,0.09,0.10],[622.25,0.09,0.10],
+    [622.25,0.09,0.10],[523.25,0.22,0.24]
+  ];
+  const bass=[
+    [130.81,0.38,0.40],[155.56,0.38,0.40],[174.61,0.38,0.40],[196.00,0.38,0.40],
+    [174.61,0.38,0.40],[155.56,0.38,0.40],[130.81,0.38,0.40],[130.81,0.55,0.58]
+  ];
+  const harm=[
+    [261.63,0.18,0.20],[311.13,0.18,0.20],[349.23,0.18,0.20],[392.00,0.18,0.20],
+    [349.23,0.18,0.20],[311.13,0.18,0.20],[261.63,0.18,0.20],[261.63,0.30,0.32]
+  ];
+  let tl=t0, tb=t0, th=t0;
+  lead.forEach(([f,d,g])=>{tone(f,d,'square',0.13,tl);tl+=g;});
+  bass.forEach(([f,d,g])=>{tone(f,d,'triangle',0.20,tb);tb+=g;});
+  harm.forEach(([f,d,g])=>{tone(f,d,'square',0.07,th);th+=g;});
+}
+function playerShootCD(t){
+  if(t.level>=3) return 4;
+  if(t.level>=2) return 5;
+  if(t.level>=1) return 6;
+  return 8;
+}
 
 document.addEventListener('click', unlockAudio, {once:false});
 
@@ -669,13 +701,14 @@ function shootTank(t){
   const maxBul = (t.isPlayer && t.level>=2)?2:1;
   const cnt = bullets.filter(b=>b.owner===t&&b.alive).length;
   if(cnt>=maxBul) return;
-  t.shootCD = t.isPlayer?20:ENEMY_TYPES[t.typeIdx].shootMin+Math.random()*(ENEMY_TYPES[t.typeIdx].shootMax-ENEMY_TYPES[t.typeIdx].shootMin);
+  t.shootCD = t.isPlayer?playerShootCD(t):ENEMY_TYPES[t.typeIdx].shootMin+Math.random()*(ENEMY_TYPES[t.typeIdx].shootMax-ENEMY_TYPES[t.typeIdx].shootMin);
   let bx=t.x+TANK_SZ/2-BULLET_SZ/2, by=t.y+TANK_SZ/2-BULLET_SZ/2;
   if(t.dir===0) by=t.y-BULLET_SZ;
   else if(t.dir===1) bx=t.x+TANK_SZ;
   else if(t.dir===2) by=t.y+TANK_SZ;
   else if(t.dir===3) bx=t.x-BULLET_SZ;
-  bullets.push({x:bx,y:by,dir:t.dir,owner:t,alive:true,speed:MOVE_BASE*3,power3:t.isPlayer&&t.level>=3,size:BULLET_SZ});
+  const bSpd = t.isPlayer?(MOVE_BASE*4.5):(MOVE_BASE*3);
+  bullets.push({x:bx,y:by,dir:t.dir,owner:t,alive:true,speed:bSpd,power3:t.isPlayer&&t.level>=3,size:BULLET_SZ});
   sShoot();
 }
 
@@ -982,80 +1015,136 @@ function drawTank(t){
   ctx.translate(cx,cy);
   ctx.rotate(t.dir*Math.PI/2);
 
-  const hw=TANK_SZ/2-2;           // 半宽
-  const trackW=Math.floor(TS*0.21); // 履带宽
+  const hw=TANK_SZ/2-2;
+  const trackW=Math.floor(TS*0.22);
   const isP=t.isPlayer;
-  const bodyCol=isP?'#ffc107':(t.hasPower&&Math.floor(animFrame/8)%2?'#ef5350':t.color);
-  const bodyDark=isP?'#e65100':'#37474f';
-  const bodyLight=isP?'#ffe082':'#b0bec5';
-  const bodyL=-hw+trackW-1;       // 车身左缘（与履带重叠 1px 衔接）
-  const bodyR=hw-trackW+1;
-  const bodyT=-hw+5;
-  const bodyB=hw-5;
+  const bodyCol=isP?'#ffd54f':(t.hasPower&&Math.floor(animFrame/8)%2?'#ef5350':t.color);
+  const bodyDark=isP?'#c17900':'#263238';
+  const bodyMid=isP?'#ffb300':'#546e7a';
+  const bodyLight=isP?'#fff8e1':'#cfd8dc';
+  const bodyL=-hw+trackW-1, bodyR=hw-trackW+1;
+  const bodyT=-hw+6, bodyB=hw-6;
 
-  // 一体式底盘（连接两侧履带）
-  ctx.fillStyle='#263238';
-  ctx.fillRect(-hw, bodyT-3, hw*2, bodyB-bodyT+6);
+  // 底盘阴影
+  ctx.fillStyle='#0d1117';
+  ctx.fillRect(-hw+1, bodyT-2, hw*2-2, bodyB-bodyT+8);
 
-  // 左履带外壳
-  ctx.fillStyle='#1a1a1a';
-  ctx.fillRect(-hw, -hw+2, trackW, hw*2-4);
-  // 右履带外壳
-  ctx.fillRect(hw-trackW, -hw+2, trackW, hw*2-4);
+  // 履带（加负重轮）
+  const drawTrack=(x)=>{
+    ctx.fillStyle='#111';
+    ctx.fillRect(x, -hw+2, trackW, hw*2-4);
+    ctx.fillStyle='#37474f';
+    ctx.fillRect(x+2, -hw+4, trackW-4, hw*2-8);
+    const treadH=hw*2-14;
+    for(let i=0;i<treadH;i+=6){
+      const ty=-hw+7+((i+(t.trackFrame?3:0)*6)%treadH);
+      ctx.fillStyle='#546e7a';
+      ctx.fillRect(x+3, ty, trackW-6, 3);
+    }
+    for(let i=-hw+10;i<hw-8;i+=14){
+      ctx.fillStyle='#78909c';
+      ctx.beginPath(); ctx.arc(x+trackW/2, i, 3, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle='#455a64';
+      ctx.beginPath(); ctx.arc(x+trackW/2, i, 1.5, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.fillStyle='#90a4ae';
+    ctx.fillRect(x+2, -hw+4, trackW-4, 2);
+  };
+  drawTrack(-hw);
+  drawTrack(hw-trackW);
 
-  // 履带纹（只在履带槽内滚动，不溢出）
-  const treadH=hw*2-12;
-  for(let i=0;i<treadH;i+=7){
-    const ty=-hw+6+((i+(t.trackFrame?3:0)*7)%treadH);
-    ctx.fillStyle='#455a64';
-    ctx.fillRect(-hw+2, ty, trackW-4, 4);
-    ctx.fillRect(hw-trackW+2, ty, trackW-4, 4);
-  }
-  ctx.fillStyle='#546e7a';
-  ctx.fillRect(-hw+2, -hw+4, trackW-4, 2);
-  ctx.fillRect(hw-trackW+2, -hw+4, trackW-4, 2);
-
-  // 车身（居中，与履带无缝贴合）
+  // 楔形装甲车身
   ctx.fillStyle=bodyDark;
-  ctx.fillRect(bodyL, bodyT, bodyR-bodyL, bodyB-bodyT);
+  ctx.beginPath();
+  ctx.moveTo(bodyL, bodyB);
+  ctx.lineTo(bodyR, bodyB);
+  ctx.lineTo(bodyR-3, bodyT+4);
+  ctx.lineTo(bodyL+3, bodyT+4);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle=bodyMid;
+  ctx.fillRect(bodyL+2, bodyT+5, bodyR-bodyL-4, bodyB-bodyT-8);
   ctx.fillStyle=bodyCol;
-  ctx.fillRect(bodyL+2, bodyT+2, bodyR-bodyL-4, bodyB-bodyT-4);
+  ctx.beginPath();
+  ctx.moveTo(bodyL+4, bodyB-3);
+  ctx.lineTo(bodyR-4, bodyB-3);
+  ctx.lineTo(bodyR-7, bodyT+8);
+  ctx.lineTo(bodyL+7, bodyT+8);
+  ctx.closePath(); ctx.fill();
   ctx.fillStyle=bodyLight;
-  ctx.fillRect(bodyL+4, bodyT+3, bodyR-bodyL-8, 5);
+  ctx.fillRect(bodyL+6, bodyT+9, bodyR-bodyL-12, 4);
 
   if(isP){
-    ctx.fillStyle='#fff'; ctx.font=`bold ${Math.max(11,TS/4)}px sans-serif`;
+    ctx.strokeStyle='#2e7d32'; ctx.lineWidth=3;
+    ctx.beginPath();
+    ctx.moveTo(bodyL+8, bodyT+14); ctx.lineTo(bodyR-8, bodyB-10);
+    ctx.moveTo(bodyL+12, bodyT+20); ctx.lineTo(bodyR-12, bodyB-4);
+    ctx.stroke();
+    ctx.fillStyle='#fff'; ctx.font=`bold ${Math.max(12,TS/3.8)}px sans-serif`;
     ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('★',0,2);
+    ctx.shadowColor='#ff6f00'; ctx.shadowBlur=4;
+    ctx.fillText('★',0,4);
+    ctx.shadowBlur=0;
     ctx.textAlign='left'; ctx.textBaseline='alphabetic';
-  } else if(t.armor>0){
-    ctx.fillStyle='#eceff1'; ctx.fillRect(-7,-7,14,14);
-    ctx.fillStyle='#78909c'; ctx.fillRect(-4,-4,8,8);
+  } else {
+    ctx.fillStyle='#c62828';
+    ctx.fillRect(bodyL+6, bodyT+10, bodyR-bodyL-12, 3);
+    if(t.armor>0){
+      ctx.fillStyle='#eceff1';
+      ctx.beginPath(); ctx.moveTo(-8,0); ctx.lineTo(0,-8); ctx.lineTo(8,0); ctx.lineTo(0,8); ctx.closePath(); ctx.fill();
+      ctx.fillStyle='#78909c';
+      ctx.fillRect(-4,-4,8,8);
+    }
   }
 
-  // 炮塔 + 炮管（一体）
-  ctx.fillStyle=isP?'#bf360c':'#455a64';
-  ctx.beginPath(); ctx.arc(0,0,TS/5,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle=isP?'#ff8f00':'#78909c';
-  ctx.beginPath(); ctx.arc(0,0,TS/7,0,Math.PI*2); ctx.fill();
+  // 六角炮塔
+  const tr=TS/4.8;
+  ctx.fillStyle=isP?'#bf360c':'#37474f';
+  ctx.beginPath();
+  for(let i=0;i<6;i++){
+    const a=i*Math.PI/3-Math.PI/6;
+    const px=Math.cos(a)*tr, py=Math.sin(a)*tr;
+    if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  }
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle=isP?'#ff8f00':'#607d8b';
+  ctx.beginPath(); ctx.arc(0,0,tr*0.55,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=isP?'#ffeb3b':'#ef5350';
+  ctx.beginPath(); ctx.arc(0,-tr*0.35,2.5,0,Math.PI*2); ctx.fill();
+
+  // 炮管 + 制退器
+  const barrelLen=hw-4;
+  ctx.fillStyle='#1a1a1a';
+  ctx.fillRect(-4,-hw-1,8,barrelLen);
+  ctx.fillStyle='#424242';
+  ctx.fillRect(-2.5,-hw-1,5,barrelLen-6);
+  ctx.fillStyle='#616161';
+  ctx.fillRect(-5,-hw-5,10,5);
+  ctx.fillStyle='#212121';
+  ctx.fillRect(-3,-hw-4,2,3); ctx.fillRect(1,-hw-4,2,3);
+  if(t.shootCD>playerShootCD(t)-2 && t.isPlayer){
+    ctx.fillStyle='#ffeb3b';
+    ctx.fillRect(-2,-hw-7,4,4);
+  }
+
+  // 侧裙甲
   ctx.fillStyle='#263238';
-  ctx.fillRect(-3,-hw-2,6,hw-6);
-  ctx.fillStyle='#37474f';
-  ctx.fillRect(-2,-hw-2,4,hw-10);
-  ctx.fillStyle='#ff5722';
-  ctx.fillRect(-2,-hw-4,4,3);
+  ctx.fillRect(bodyL-1, bodyT+12, 3, bodyB-bodyT-16);
+  ctx.fillRect(bodyR-2, bodyT+12, 3, bodyB-bodyT-16);
 
   ctx.restore();
 }
 
 function drawMiniTank(x,y){
-  ctx.fillStyle='#455a64';
-  ctx.fillRect(x,y,42,36);
-  ctx.fillStyle='#ffc107';
-  ctx.fillRect(x+8,y+6,26,22);
-  ctx.fillStyle='#263238';
-  ctx.fillRect(x+15,y-6,12,10);
+  ctx.fillStyle='#111';
   ctx.fillRect(x+2,y+8,6,20); ctx.fillRect(x+34,y+8,6,20);
+  ctx.fillStyle='#263238';
+  ctx.fillRect(x+8,y+4,26,28);
+  ctx.fillStyle='#ffd54f';
+  ctx.fillRect(x+10,y+7,22,20);
+  ctx.fillStyle='#bf360c';
+  ctx.beginPath(); ctx.arc(x+21,y+17,7,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#424242';
+  ctx.fillRect(x+18,y-4,6,12);
 }
 
 /* ================================================================
@@ -1078,7 +1167,7 @@ function beginStage(){
   state='stage'; stageTimer=120;
   document.getElementById('stageNum').textContent=level;
   document.getElementById('stageBanner').classList.add('show');
-  sStart();
+  sStageStart();
   updateUI();
 }
 
