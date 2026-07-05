@@ -2,10 +2,14 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>小塔小游戏</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
 @keyframes float{
   0%,100%{transform:translateY(0) rotate(0deg)}
   33%{transform:translateY(-12px) rotate(2deg)}
@@ -36,10 +40,11 @@
 }
 body{
   font-family:"Comic Sans MS","Chalkboard SE","PingFang SC","Microsoft YaHei",sans-serif;
-  min-height:100vh;display:flex;justify-content:center;align-items:center;
-  overflow:hidden;user-select:none;
+  min-height:100vh;display:flex;justify-content:center;align-items:flex-start;
+  overflow-x:hidden;overflow-y:auto;user-select:none;
   background:linear-gradient(-45deg,#fce4ec,#e8f5e9,#e3f2fd,#fff3e0,#f3e5f5);
   background-size:400% 400%;animation:gradientShift 12s ease infinite;
+  padding:20px 0 40px;
 }
 /* 装饰元素 */
 .deco{
@@ -86,7 +91,7 @@ body{
 
 /* 游戏卡片网格 */
 .game-grid{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin:12px 0;width:100%;max-width:720px;
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:24px;margin:12px 0;width:100%;max-width:720px;
 }
 .game-card{
   background:#fff;border-radius:28px;padding:32px 20px 26px;cursor:pointer;
@@ -97,8 +102,9 @@ body{
 .game-card:nth-child(1){animation-delay:.15s}
 .game-card:nth-child(2){animation-delay:.3s}
 .game-card:nth-child(3){animation-delay:.45s}
-
 .game-card:nth-child(4){animation-delay:.6s}
+.game-card:nth-child(5){animation-delay:.75s}
+.game-card:nth-child(6){animation-delay:.9s}
 .game-card::before{
   content:"";position:absolute;top:0;left:0;right:0;height:6px;
 }
@@ -107,6 +113,7 @@ body{
 .game-card.space::before{background:linear-gradient(90deg,#aa44ff,#6a1b9a)}
 
 .game-card.tank::before{background:linear-gradient(90deg,#6b8e23,#8fbc4a)}
+.game-card.fruit::before{background:linear-gradient(90deg,#ff9800,#ffcc02)}
 .game-card:hover{
   transform:translateY(-8px) scale(1.02);
   box-shadow:0 20px 60px rgba(0,0,0,.18);
@@ -124,6 +131,7 @@ body{
 .game-card.space::after{background:#aa44ff}
 
 .game-card.tank::after{background:#6b8e23}
+.game-card.fruit::after{background:#ff9800}
 .game-card:hover::after{transform:scale(3);opacity:.1}
 
 /* 卡片图标 */
@@ -167,6 +175,17 @@ body{
 .game-card.space .game-title{color:#7b1fa2}
 
 .game-card.tank .game-title{color:#556b2f}
+.game-card.fruit .game-title{color:#e65100}
+.game-card.fruit .icon-wrap{
+  background:linear-gradient(135deg,#fff8e1,#ffe082);
+  box-shadow:0 8px 24px rgba(255,152,0,.2);
+}
+.game-card.fruit:hover .icon-wrap{
+  box-shadow:0 12px 36px rgba(255,152,0,.35);
+}
+.game-card.fruit .game-tag{
+  background:#fff8e1;color:#ff9800;
+}
 
 /* 卡片描述 */
 .game-card .game-desc{
@@ -269,9 +288,20 @@ body{
       <div class="game-desc">驾驶坦克在战场上与敌军激战，<br>保护基地消灭所有敌人！</div>
       <div class="game-tag">🎖️ 经典坦克对战</div>
     </div>
+
+    <!-- 接水果卡片 -->
+    <div class="game-card fruit" onclick="goToFruit()">
+      <div class="icon-wrap">
+        🍎
+        <span class="icon-badge">🍊</span>
+      </div>
+      <div class="game-title">接水果大作战</div>
+      <div class="game-desc">左右移动接住掉落的水果，<br>小心炸弹，挑战最高分！</div>
+      <div class="game-tag">🧺 9个角色可选</div>
+    </div>
   </div>
 
-  <div class="footer-text">🎮 新游戏「坦克大战」加入战场！ 🚜</div>
+  <div class="footer-text">🍎 新游戏「接水果大作战」上线啦！ 🍊</div>
 
 </div>
 </div>
@@ -282,6 +312,7 @@ function goToFlappy(){window.location.href="flappy.html"}
 function goToSpace(){window.location.href="space.html"}
 
 function goToTank(){window.location.href="tank.html"}
+function goToFruit(){window.location.href="fruit.html"}
 </script>
 </body>
 </html>
