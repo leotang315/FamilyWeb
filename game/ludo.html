@@ -23,9 +23,10 @@ body{
     radial-gradient(circle at 12% 18%, rgba(255,224,130,.35), transparent 40%),
     radial-gradient(circle at 88% 82%, rgba(129,212,250,.4), transparent 42%),
     linear-gradient(155deg,#5b6cc4 0%,#7b83d0 40%,#a58fd6 70%,#e0a3c9 100%);
-  padding:14px 0 30px;
+  padding:8px 0 16px;
 }
-#app{width:100%;max-width:640px;padding:10px 12px;position:relative;z-index:1}
+#app{width:100%;max-width:740px;padding:6px 10px;position:relative;z-index:1}
+#game{padding-top:2px}
 .page{display:none;flex-direction:column;align-items:center}
 .page.active{display:flex}
 
@@ -55,7 +56,7 @@ body{
   border:3px solid #ddd;overflow:hidden;background:#f0ebe3;transition:transform .12s;
   display:flex;align-items:center;justify-content:center;font-size:24px;
 }
-.avatar-btn img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.avatar-btn img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top}
 .avatar-btn:active{transform:scale(.92)}
 .avatar-btn .swap{
   position:absolute;right:-2px;bottom:-2px;width:18px;height:18px;border-radius:50%;
@@ -83,7 +84,7 @@ body{
 .rules b{color:#e07b00}
 
 /* ===== game screen ===== */
-.topbar{display:flex;align-items:center;gap:8px;width:100%;max-width:560px;margin-bottom:8px}
+.topbar{display:flex;align-items:center;gap:6px;width:100%;max-width:720px;margin-bottom:4px}
 .turn-badge{
   flex:1;display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.92);
   border-radius:16px;padding:6px 12px;box-shadow:0 4px 14px rgba(0,0,0,.15);
@@ -93,7 +94,7 @@ body{
   width:40px;height:40px;border-radius:50%;background:#eee;display:flex;align-items:center;
   justify-content:center;font-size:22px;overflow:hidden;flex-shrink:0;box-shadow:0 2px 6px rgba(0,0,0,.2)
 }
-.turn-badge .avatar img{width:100%;height:100%;object-fit:cover}
+.turn-badge .avatar img{width:100%;height:100%;object-fit:cover;object-position:center top}
 .turn-badge .t-info{line-height:1.15;min-width:0}
 .turn-badge .t-name{font-weight:bold;color:#5a3e1b;font-size:16px}
 .turn-badge .t-sub{font-size:12px;color:#8b7355}
@@ -105,31 +106,63 @@ body{
 
 /* board */
 .board-wrap{
-  width:min(94vw,72vh,560px);aspect-ratio:1;position:relative;margin:0 auto;
-  border-radius:22px;padding:8px;
+  width:min(98vw, calc(100vh - 148px), 720px);aspect-ratio:1;position:relative;margin:0 auto;
+  border-radius:20px;padding:6px;
   background:linear-gradient(145deg,#fff,#efe4cf);
   box-shadow:0 16px 44px rgba(0,0,0,.32), inset 0 2px 0 rgba(255,255,255,.7);
 }
-.board{position:absolute;inset:8px;}
+.board{position:absolute;inset:6px;}
 .cell{position:absolute;border:1px solid rgba(0,0,0,.06);box-sizing:border-box;
   display:flex;align-items:center;justify-content:center;
-  border-radius:4px;overflow:hidden;
+  border-radius:4px;overflow:visible;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.6), inset 0 -2px 3px rgba(0,0,0,.06)}
-.cell .arrow{font-size:min(2.4vw,13px);line-height:1;opacity:.4;color:rgba(60,40,15,.7)}
-.cell .ico{font-size:min(2.7vw,15px);line-height:1;font-weight:bold}
-.cell.safe .ico{font-size:min(2.5vw,14px)}
+.cell .ico{font-size:min(3vw,16px);line-height:1;font-weight:bold;position:relative;z-index:2}
+.cell.safe .ico{font-size:min(2.8vw,15px)}
+.cell.has-flow::after{
+  content:'';position:absolute;inset:0;border-radius:4px;pointer-events:none;z-index:0;
+  background:linear-gradient(var(--flow-deg,90deg),
+    transparent 0%, transparent 38%, rgba(255,200,60,.55) 50%, transparent 62%, transparent 100%);
+  background-size:220% 220%;animation:flowBeam 1.6s linear infinite;
+  animation-delay:var(--delay,0s);opacity:.85;
+}
+@keyframes flowBeam{
+  0%{background-position:120% 50%}
+  100%{background-position:-20% 50%}
+}
+.cell .arrow-wrap,.cell .arrow-dual{position:relative;width:100%;height:100%;z-index:1}
+.cell .arrow{
+  position:absolute;left:50%;top:50%;font-size:min(3.2vw,17px);line-height:1;
+  color:rgba(70,45,10,.88);text-shadow:0 0 6px rgba(255,210,80,.75);
+  transform:translate(-50%,-50%) rotate(var(--deg,0deg));
+  animation:arrowPulse 1.35s ease-in-out infinite;
+  animation-delay:var(--delay,0s);display:block;
+}
+.cell .arrow.arrow-loop{color:rgba(55,35,8,.78);font-size:min(2.6vw,14px);left:28%;opacity:.85}
+.cell .arrow.arrow-home{color:var(--home-color,#e65100);font-size:min(3.4vw,18px);left:72%;
+  text-shadow:0 0 8px rgba(255,160,0,.9), 0 0 2px rgba(255,255,255,.8);
+  animation:arrowHomePulse 1.1s ease-in-out infinite}
+.cell .arrow.arrow-center{color:#ff8f00;font-size:min(2.4vw,13px);left:68%;top:68%;
+  text-shadow:0 0 8px rgba(255,180,0,.95)}
+@keyframes arrowPulse{
+  0%,100%{opacity:.55;transform:translate(-50%,-50%) rotate(var(--deg,0deg)) translateX(-1px) scale(.9)}
+  50%{opacity:1;transform:translate(-50%,-50%) rotate(var(--deg,0deg)) translateX(4px) scale(1.12)}
+}
+@keyframes arrowHomePulse{
+  0%,100%{opacity:.65;transform:translate(-50%,-50%) rotate(var(--deg,0deg)) scale(.92)}
+  50%{opacity:1;transform:translate(-50%,-50%) rotate(var(--deg,0deg)) scale(1.18)}
+}
 .base-panel{position:absolute;border-radius:16px;box-shadow:inset 0 0 0 3px rgba(255,255,255,.55), inset 0 -6px 14px rgba(0,0,0,.2)}
 .center-hub{position:absolute;border-radius:12px;overflow:hidden;box-shadow:0 0 0 2px rgba(0,0,0,.1)}
 
 /* plane token */
 .plane{
-  position:absolute;width:8%;height:8%;border-radius:50%;transform:translate(-50%,-50%);
+  position:absolute;width:8.5%;height:8.5%;border-radius:50%;transform:translate(-50%,-50%);
   display:flex;align-items:center;justify-content:center;font-size:min(3.4vw,20px);overflow:hidden;
   transition:left .2s ease, top .2s ease;z-index:20;cursor:default;background:#fff;
   box-shadow:0 3px 6px rgba(0,0,0,.35), inset 0 -3px 0 rgba(0,0,0,.15);
   border:3px solid #fff;
 }
-.plane img{width:100%;height:100%;object-fit:cover;pointer-events:none}
+.plane img{width:100%;height:100%;object-fit:cover;object-position:center top;pointer-events:none}
 .plane.finished{opacity:.55}
 .plane.movable{cursor:pointer;animation:bob .7s ease-in-out infinite;z-index:30;
   box-shadow:0 0 0 3px #fff, 0 0 14px 4px gold, 0 3px 6px rgba(0,0,0,.35)}
@@ -137,8 +170,8 @@ body{
 
 /* ===== 3D dice ===== */
 .dock{
-  display:flex;align-items:center;justify-content:center;gap:14px;width:100%;max-width:560px;
-  margin-top:12px;background:rgba(255,255,255,.9);border-radius:20px;padding:10px 16px;
+  display:flex;align-items:center;justify-content:center;gap:12px;width:100%;max-width:720px;
+  margin-top:6px;background:rgba(255,255,255,.9);border-radius:18px;padding:8px 14px;
   box-shadow:0 6px 20px rgba(0,0,0,.16);
 }
 .dice-scene{width:clamp(52px,13vw,62px);height:clamp(52px,13vw,62px);perspective:460px;--half:31px;flex-shrink:0}
@@ -170,13 +203,13 @@ body{
 .btn-roll:disabled{opacity:.45;cursor:default;box-shadow:0 5px 0 #c56a00}
 
 /* players strip */
-.pstrip{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;width:100%;max-width:560px;margin-top:10px}
+.pstrip{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;width:100%;max-width:720px;margin-top:6px}
 .pchip{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.85);border-radius:12px;
   padding:3px 10px 3px 3px;font-size:12.5px;color:#5a3e1b;font-weight:bold;box-shadow:0 2px 6px rgba(0,0,0,.12);
   border-bottom:4px solid #ccc;opacity:.6;transition:opacity .2s}
 .pchip.active{opacity:1;transform:scale(1.05)}
 .pchip .cav{width:24px;height:24px;border-radius:50%;overflow:hidden;background:#eee;display:flex;align-items:center;justify-content:center;font-size:13px}
-.pchip .cav img{width:100%;height:100%;object-fit:cover}
+.pchip .cav img{width:100%;height:100%;object-fit:cover;object-position:center top}
 .pchip .home-count{background:rgba(0,0,0,.08);border-radius:8px;padding:0 6px;font-size:11px}
 
 /* win overlay */
@@ -187,7 +220,7 @@ body{
   width:88%;box-shadow:0 20px 60px rgba(0,0,0,.4);animation:pop .45s cubic-bezier(.175,.885,.32,1.275)}
 .win-card .win-av{width:88px;height:88px;border-radius:50%;margin:0 auto 8px;overflow:hidden;border:4px solid #ffd54f;
   box-shadow:0 6px 18px rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:48px;background:#eee}
-.win-card .win-av img{width:100%;height:100%;object-fit:cover}
+.win-card .win-av img{width:100%;height:100%;object-fit:cover;object-position:center top}
 .win-card h2{color:#5a3e1b;font-size:26px;margin-bottom:6px}
 .win-card p{color:#8b6b3d;font-size:15px;margin-bottom:18px}
 .win-card .btn-group{display:flex;gap:10px;justify-content:center}
@@ -207,7 +240,7 @@ body{
     </div>
     <div class="setup-card">
       <h2>选择玩家与角色</h2>
-      <div class="hint">至少 2 队参战 · 点头像换角色</div>
+      <div class="hint">至少 2 队参战 · 点头像换真人角色</div>
       <div id="plList"></div>
       <div class="setup-actions">
         <button class="btn btn-ghost" onclick="location.href='index.html'">🏠 菜单</button>
@@ -265,17 +298,14 @@ body{
 
 <script>
 /* ============================================================
-   角色（参考 feixingqi.html）
+   角色（仅真人照片）
    ============================================================ */
 const CHARACTERS = [
-  {nm:'beta',   em:'🐰', img:'role/beta2.JPG'},
-  {nm:'dad',    em:'🦊', img:'role/dad.JPG'},
-  {nm:'mum',    em:'👩', img:'role/mum.JPG'},
-  {nm:'Duggee', em:'🐶', img:'role/duggee.png'},
-  {nm:'Betty',  em:'🐙', img:'role/betty.png'},
-  {nm:'Happy',  em:'🐸', img:'role/happy.png'},
-  {nm:'Norrie', em:'🐭', img:'role/norrie.png'},
-  {nm:'Roly',   em:'🐹', img:'role/roly.png'}
+  {nm:'小塔',   em:'👧', img:'role/beta2.JPG'},
+  {nm:'小塔2',  em:'👧', img:'role/beta.JPG'},
+  {nm:'小塔3',  em:'👧', img:'role/beta3.JPG'},
+  {nm:'爸爸',   em:'👨', img:'role/dad.JPG'},
+  {nm:'妈妈',   em:'👩', img:'role/mum.JPG'}
 ];
 
 /* ============================================================
@@ -303,10 +333,10 @@ const HOME = {
   blue:   [[13,7],[12,7],[11,7],[10,7],[9,7],[8,7]]
 };
 const COLORS = {
-  red:    {name:'红队', hex:'#e53935', dark:'#b71c1c', light:'#ffcdd2', start:0,  defChar:4},
+  red:    {name:'红队', hex:'#e53935', dark:'#b71c1c', light:'#ffcdd2', start:0,  defChar:0},
   green:  {name:'绿队', hex:'#43a047', dark:'#1b5e20', light:'#c8e6c9', start:13, defChar:3},
-  yellow: {name:'黄队', hex:'#fbc02d', dark:'#f57f17', light:'#fff9c4', start:26, defChar:5},
-  blue:   {name:'蓝队', hex:'#1e88e5', dark:'#0d47a1', light:'#bbdefb', start:39, defChar:6}
+  yellow: {name:'黄队', hex:'#fbc02d', dark:'#f57f17', light:'#fff9c4', start:26, defChar:4},
+  blue:   {name:'蓝队', hex:'#1e88e5', dark:'#0d47a1', light:'#bbdefb', start:39, defChar:1}
 };
 const ORDER = ['red','green','yellow','blue'];
 const BASE_SLOTS = {
@@ -331,6 +361,26 @@ ORDER.forEach(c=>{
   flyRing[ringOf(c, FLY_STEP)]  = c;
 });
 const SAFE_RINGS = new Set(Object.keys(startRing).map(Number));
+const GATE_RING = {};  // 主环入口格 → 颜色
+ORDER.forEach(c=>{ GATE_RING[ringOf(c, 50)] = c; });
+
+function flowDeg(deg){ return (deg + 90) + 'deg'; } // 光带方向与箭头垂直
+
+function singleArrow(deg, delay, extraCls){
+  return `<div class="arrow-wrap"><span class="arrow ${extraCls||''}" style="--deg:${deg}deg;--delay:${delay}s">➤</span></div>`;
+}
+function dualArrow(loopDeg, homeDeg, delay, homeColor, extraHomeCls){
+  return `<div class="arrow-dual">
+    <span class="arrow arrow-loop" style="--deg:${loopDeg}deg;--delay:${delay}s">➤</span>
+    <span class="arrow arrow-home ${extraHomeCls||''}" style="--deg:${homeDeg}deg;--delay:${(delay+0.15).toFixed(2)}s;--home-color:${homeColor}">➤</span>
+  </div>`;
+}
+function homeDualArrow(pathDeg, centerDeg, delay, teamColor){
+  return `<div class="arrow-dual">
+    <span class="arrow arrow-loop" style="--deg:${pathDeg}deg;--delay:${delay}s;color:${teamColor}">➤</span>
+    <span class="arrow arrow-center" style="--deg:${centerDeg}deg;--delay:${(delay+0.2).toFixed(2)}s">➤</span>
+  </div>`;
+}
 
 // 掷骰子 3D
 const DICE_PIPS = { 1:[5], 2:[1,9], 3:[1,5,9], 4:[1,3,7,9], 5:[1,3,5,7,9], 6:[1,3,4,6,7,9] };
@@ -468,10 +518,11 @@ function buildBoard(){
     });
   });
 
-  // 主环格子（按色块着色 + 方向箭头）
+  // 主环格子（按色块着色 + 流动箭头）
   PATH.forEach((rc,i)=>{
     const owner = ORDER[Math.floor(i/13)];
     const cell = mkCell(rc);
+    const delay = (i * 0.07).toFixed(2);
     cell.style.background = `linear-gradient(145deg, #fff, ${COLORS[owner].light})`;
     if(startRing[i]!==undefined){
       cell.style.background = `linear-gradient(145deg,${COLORS[startRing[i]].hex},${COLORS[startRing[i]].dark})`;
@@ -483,22 +534,39 @@ function buildBoard(){
     } else if(flyRing[i]!==undefined){
       cell.style.background = `linear-gradient(145deg,#fff,${COLORS[flyRing[i]].light})`;
       cell.innerHTML = `<span class="ico" style="color:${COLORS[flyRing[i]].dark}">✈</span>`;
+    } else if(GATE_RING[i]!==undefined){
+      // 路口：绕圈箭头 + 进家箭头
+      const c = GATE_RING[i];
+      const loopDeg = arrowDeg(rc, PATH[(i+1)%52]);
+      const homeDeg = arrowDeg(rc, HOME[c][0]);
+      cell.classList.add('has-flow','dual-arrows');
+      cell.style.setProperty('--flow-deg', flowDeg(loopDeg));
+      cell.style.setProperty('--delay', delay+'s');
+      cell.innerHTML = dualArrow(loopDeg, homeDeg, delay, COLORS[c].hex);
     } else {
       const deg = arrowDeg(rc, PATH[(i+1)%52]);
-      cell.innerHTML = `<span class="arrow" style="transform:rotate(${deg}deg)">➤</span>`;
+      cell.classList.add('has-flow');
+      cell.style.setProperty('--flow-deg', flowDeg(deg));
+      cell.style.setProperty('--delay', delay+'s');
+      cell.innerHTML = singleArrow(deg, delay);
     }
     board.appendChild(cell);
   });
 
-  // 回家通道（箭头指向中心）
+  // 回家通道（双箭头：沿通道 + 指向中心）
   ORDER.forEach(c=>{
     HOME[c].forEach((rc,j)=>{
       const cell = mkCell(rc);
+      const delay = ((52 + j * 4) * 0.07).toFixed(2);
       cell.style.background = `linear-gradient(145deg,${COLORS[c].light},${COLORS[c].hex}55)`;
       cell.style.borderColor = COLORS[c].hex;
+      cell.classList.add('has-flow','dual-arrows');
       const nxt = j < HOME[c].length-1 ? HOME[c][j+1] : [7,7];
-      const deg = arrowDeg(rc, nxt);
-      cell.innerHTML = `<span class="arrow" style="transform:rotate(${deg}deg);color:${COLORS[c].dark};opacity:.6">➤</span>`;
+      const pathDeg = arrowDeg(rc, nxt);
+      const centerDeg = arrowDeg(rc, [7,7]);
+      cell.style.setProperty('--flow-deg', flowDeg(pathDeg));
+      cell.style.setProperty('--delay', delay+'s');
+      cell.innerHTML = homeDualArrow(pathDeg, centerDeg, delay, COLORS[c].dark);
       board.appendChild(cell);
     });
   });
