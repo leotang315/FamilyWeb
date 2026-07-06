@@ -967,7 +967,7 @@ function gameLoop(){
     if(nextWave > wave){
       wave = nextWave;
       waveBannerTimer = 90;
-      document.getElementById("waveBanner").textContent = "🏁 第 " + wave + " 段赛道";
+      document.getElementById("waveBanner").textContent = wave >= 4 ? "🏍️ 摩托车出没！" : "🏁 第 " + wave + " 段赛道";
       document.getElementById("waveBanner").classList.add("show");
       playWave();
     }
