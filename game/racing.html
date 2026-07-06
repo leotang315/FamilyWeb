@@ -598,7 +598,8 @@ function drawEntities(){
 }
 
 function gameLoop(){
-  if(gameState !== "playing" && gameState !== "ready") return;
+  if(gameState === "over") return;
+  if(gameState !== "playing" && gameState !== "ready" && gameState !== "paused") return;
   frameCount++;
   if(gameState === "playing"){
     distance += speed * 0.35;
