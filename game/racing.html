@@ -39,6 +39,17 @@ body{
 }
 .char-card .char-preview img{width:100%;height:100%;object-fit:cover}
 .char-card .char-name{font-size:13px;color:#5a3e1b;font-weight:bold}
+.char-card .car-thumb{
+  width:38px;height:auto;margin:6px auto 0;display:block;
+  image-rendering:pixelated;image-rendering:crisp-edges;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2));
+}
+.load-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;
+  align-items:center;justify-content:center;z-index:200;color:#fff;
+  font-size:clamp(18px,4vw,24px);font-weight:bold;backdrop-filter:blur(4px);
+}
+.load-overlay.show{display:flex}
+.load-overlay .spin{font-size:48px;display:block;text-align:center;margin-bottom:10px;animation:bounce 1s infinite}
 .btn-start{
   background:linear-gradient(180deg,#ff7043,#e53935);color:#fff;border:none;border-radius:20px;
   padding:14px 48px;font-size:20px;font-weight:bold;cursor:pointer;box-shadow:0 4px 0 #b71c1c;font-family:inherit;margin-top:4px;
@@ -154,11 +165,13 @@ body{
 </head>
 <body>
 
+<div id="loadOverlay" class="load-overlay"><div><span class="spin">🏎️</span>加载赛车贴图...</div></div>
+
 <div id="app">
   <div id="charSelect" class="page active">
     <div class="game-header">
       <h1>🏎️ 极速赛车 🏁</h1>
-      <div class="subtitle">换道超车、吃道具、攒连击，冲最远！</div>
+      <div class="subtitle">挑角色选赛车，换道超车攒连击！</div>
     </div>
     <div class="char-grid" id="charGrid"></div>
     <button class="btn-start" onclick="startGame()">出发！🏁</button>
@@ -227,11 +240,13 @@ var CHARS = [
 var KENNEY_COLORS = ["black","blue","green","red","yellow"];
 var CHAR_CAR = {a:"red", b:"yellow", c:"green", i:"blue", j:"red", k:"green", l:"blue", m:"yellow", n:"black"};
 var ENEMY_STYLES = [
-  {id:"sedan", variant:1, small:false, w:0.95, h:1.2},
-  {id:"suv",   variant:3, small:false, w:1.02, h:1.25},
-  {id:"truck", variant:1, small:true,  w:1.08, h:1.3},
-  {id:"sport", variant:2, small:false, w:0.9,  h:1.15}
+  {id:"sedan", kind:"car", variant:1, small:false, w:0.95, h:1.2},
+  {id:"suv",   kind:"car", variant:3, small:false, w:1.02, h:1.25},
+  {id:"truck", kind:"car", variant:1, small:true,  w:1.08, h:1.3},
+  {id:"sport", kind:"car", variant:2, small:false, w:0.9,  h:1.15},
+  {id:"moto",  kind:"moto", w:0.72, h:1.05}
 ];
+var POWERUP_SPRITE = {shield:"barrelBlue", nitro:"barrelRed", magnet:"lights", heart:"star"};
 var POWERUP_KINDS = ["shield","nitro","magnet","heart"];
 var LANES = 3;
 var ASSET = "assets/racing/PNG/";
@@ -339,7 +354,12 @@ function buildCharGrid(){
       var name = document.createElement("div");
       name.className = "char-name";
       name.textContent = ch.nm;
-      card.appendChild(preview); card.appendChild(name);
+      var carThumb = document.createElement("img");
+      carThumb.className = "car-thumb";
+      carThumb.alt = "";
+      carThumb.src = ASSET + "Cars/car_" + (CHAR_CAR[ch.id] || "red") + "_1.png";
+      carThumb.onerror = function(){ carThumb.style.display = "none"; };
+      card.appendChild(preview); card.appendChild(name); card.appendChild(carThumb);
       card.onclick = function(){ unlockAudio(); playSelect(); selectCharByIndex(idx); };
       grid.appendChild(card);
       if(idx === 0){ card.classList.add("selected"); sel = ch; }
@@ -400,6 +420,7 @@ function loadSprites(){
   var jobs = [];
   var ci, vi;
   for(ci = 0; ci < KENNEY_COLORS.length; ci++){
+    jobs.push(loadImage("moto_"+KENNEY_COLORS[ci], ASSET+"Motorcycles/motorcycle_"+KENNEY_COLORS[ci]+".png"));
     for(vi = 1; vi <= 5; vi++){
       jobs.push(loadImage("car_"+KENNEY_COLORS[ci]+"_"+vi, ASSET+"Cars/car_"+KENNEY_COLORS[ci]+"_"+vi+".png"));
       jobs.push(loadImage("car_"+KENNEY_COLORS[ci]+"_small_"+vi, ASSET+"Cars/car_"+KENNEY_COLORS[ci]+"_small_"+vi+".png"));
@@ -417,14 +438,27 @@ function loadSprites(){
   jobs.push(loadImage("treeBig", ASSET+"Objects/tree_large.png"));
   jobs.push(loadImage("star", ASSET+"Objects/light_yellow.png"));
   jobs.push(loadImage("skid", ASSET+"Objects/skidmark_short_1.png"));
+  jobs.push(loadImage("barrier", ASSET+"Objects/barrier_red_race.png"));
+  jobs.push(loadImage("tires", ASSET+"Objects/tires_red.png"));
+  jobs.push(loadImage("barrelBlue", ASSET+"Objects/barrel_blue.png"));
+  jobs.push(loadImage("barrelRed", ASSET+"Objects/barrel_red.png"));
+  jobs.push(loadImage("lights", ASSET+"Objects/lights.png"));
   return Promise.all(jobs).then(function(){
     spritesReady = true;
     spritesLoading = false;
   });
 }
 
-function getCarImg(color, styleDef){
-  var v = (styleDef && styleDef.variant) || 1;
+function driveFrame(){
+  var rate = (buffs.nitro > 0 || nitroHeld) ? 4 : 9;
+  return 1 + Math.floor(frameCount / rate) % 5;
+}
+
+function getCarImg(color, styleDef, frame){
+  if(styleDef && styleDef.kind === "moto"){
+    return spriteCache["moto_"+color] || spriteCache.moto_red || spriteCache.car_red_1;
+  }
+  var v = frame || (styleDef && styleDef.variant) || 1;
   var small = styleDef && styleDef.small;
   var key = small ? ("car_"+color+"_small_"+v) : ("car_"+color+"_"+v);
   return spriteCache[key] || spriteCache.car_red_1;
@@ -433,7 +467,7 @@ function getCarImg(color, styleDef){
 function carDrawSize(styleDef){
   var sf = styleDef || ENEMY_STYLES[0];
   var w = carW * sf.w;
-  var img = getCarImg("red", sf);
+  var img = sf.kind === "moto" ? getCarImg("red", sf) : getCarImg("red", sf, 1);
   var aspect = (img && img.height) ? img.height / img.width : 1.85;
   return {w: w, h: w * aspect};
 }
@@ -524,6 +558,10 @@ function drawRoad(){
       var tw = tileS * (t % 3 === 0 ? 1.1 : 0.85);
       ctx.drawImage(treeImg, tx - tw / 2, ty, tw, tw);
     }
+    if(t % 4 === 0 && spriteCache.barrier && spriteCache.barrier.complete){
+      var bx = t % 2 === 0 ? roadL - 22 : roadR + 8;
+      ctx.drawImage(spriteCache.barrier, bx, ty + 20, 28, 28);
+    }
   }
 
   var roadTile = spriteCache.road;
@@ -566,7 +604,8 @@ function drawRoad(){
 
 function drawCarSprite(x, y, color, styleDef, isPlayer, facingDown){
   var sf = styleDef || ENEMY_STYLES[0];
-  var img = getCarImg(isPlayer ? (CHAR_CAR[sel ? sel.id : "a"] || "red") : color, sf);
+  var frame = isPlayer ? driveFrame() : (1 + Math.floor((frameCount + x) / 12) % 5);
+  var img = getCarImg(isPlayer ? (CHAR_CAR[sel ? sel.id : "a"] || "red") : color, sf, frame);
   var size = carDrawSize(sf);
   var w = size.w, h = size.h;
 
@@ -643,6 +682,26 @@ function drawPickup(e){
   } else if(e.type === "cone"){
     var cone = spriteCache.cone;
     if(cone && cone.complete) drawSprite(cone, e._x, e._y, size * 0.55, size * 0.7, false);
+  } else if(e.type === "tire"){
+    var tires = spriteCache.tires;
+    if(tires && tires.complete) drawSprite(tires, e._x, e._y, size * 0.85, size * 0.55, false);
+  } else if(POWERUP_KINDS.indexOf(e.type) >= 0){
+    var pk = POWERUP_SPRITE[e.type];
+    var pu = pk ? spriteCache[pk] : null;
+    if(pu && pu.complete){
+      drawSprite(pu, e._x, e._y, size * 0.7, size * 0.7, false);
+      var em = ({shield:"🛡️",nitro:"⚡",magnet:"🧲",heart:"❤️"})[e.type];
+      ctx.font = (size * 0.38) + "px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(em, e._x, e._y - size * 0.05);
+    } else {
+      var em2 = ({shield:"🛡️",nitro:"⚡",magnet:"🧲",heart:"❤️"})[e.type] || "✨";
+      ctx.font = size + "px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(em2, e._x, e._y);
+    }
   } else {
     var em = ({shield:"🛡️",nitro:"⚡",magnet:"🧲",heart:"❤️"})[e.type] || "✨";
     ctx.save();
@@ -670,6 +729,7 @@ function laneChange(dir){
 
 function pickEnemyStyle(){
   var r = Math.random();
+  if(distance > 600 && r < 0.16) return ENEMY_STYLES[4];
   if(distance > 800 && r < 0.18) return ENEMY_STYLES[3];
   if(distance > 400 && r < 0.28) return ENEMY_STYLES[2];
   if(r < 0.35) return ENEMY_STYLES[1];
@@ -692,6 +752,11 @@ function spawnEnemy(){
 function spawnCone(){
   var lane = Math.floor(Math.random() * LANES);
   entities.push({ type:"cone", lane: lane, y: -carH * 0.5, spin: 0 });
+}
+
+function spawnTire(){
+  var lane = Math.floor(Math.random() * LANES);
+  entities.push({ type:"tire", lane: lane, y: -carH * 0.55, spin: 0 });
 }
 
 function spawnPickup(kind){
@@ -831,7 +896,7 @@ function updateEntities(){
         addFloatText(player.x, playerY - 40, "+" + bonus + " 超车!", "#ffeb3b");
         addParticles(e._x, e._y, "#fff59d", 6);
       }
-    } else if(e.type === "cone"){
+    } else if(e.type === "cone" || e.type === "tire"){
       if(Math.abs(e.y - playerY) < carH * 0.5 && Math.abs(e.lane - player.lane) < 0.35){
         if(invincible <= 0 && buffs.shield <= 0){
           lives--;
@@ -924,6 +989,7 @@ function gameLoop(){
       if(Math.random() < 0.18 + wave * 0.03) spawnEnemy();
       if(Math.random() < 0.12) spawnOil();
       if(Math.random() < 0.1) spawnCone();
+      if(Math.random() < 0.08) spawnTire();
     }
     itemTimer++;
     if(itemTimer >= 70){
@@ -1015,14 +1081,16 @@ function beginPlay(){
 function startGame(){
   if(!sel) return;
   unlockAudio();
-  document.getElementById("charSelect").classList.remove("active");
-  document.getElementById("gameUI").classList.add("active");
-  document.getElementById("gameOverOverlay").classList.remove("show");
-  document.getElementById("readyMsg").style.display = "block";
-  document.getElementById("pauseMsg").style.display = "none";
-  canvas = document.getElementById("gameCanvas");
-  ctx = canvas.getContext("2d");
+  document.getElementById("loadOverlay").classList.add("show");
   loadSprites().then(function(){
+    document.getElementById("loadOverlay").classList.remove("show");
+    document.getElementById("charSelect").classList.remove("active");
+    document.getElementById("gameUI").classList.add("active");
+    document.getElementById("gameOverOverlay").classList.remove("show");
+    document.getElementById("readyMsg").style.display = "block";
+    document.getElementById("pauseMsg").style.display = "none";
+    canvas = document.getElementById("gameCanvas");
+    ctx = canvas.getContext("2d");
     resizeCanvas();
     resetGame();
     gameState = "ready";
