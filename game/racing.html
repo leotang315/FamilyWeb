@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>小塔小游戏 - 极速赛车</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:"Comic Sans MS","Chalkboard SE","PingFang SC","Microsoft YaHei",sans-serif;
+  background:
+    radial-gradient(circle at 20% 15%, rgba(255,87,34,.2), transparent 45%),
+    radial-gradient(circle at 80% 85%, rgba(33,150,243,.18), transparent 42%),
+    linear-gradient(160deg,#1a1a2e 0%,#16213e 40%,#0f3460 100%);
+  min-height:100vh;display:flex;justify-content:center;align-items:center;
+  overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent;
+}
+#app{width:100%;max-width:780px;padding:12px;position:relative}
+.page{display:none;flex-direction:column;align-items:center}
+.page.active{display:flex}
+.game-header{text-align:center;margin-bottom:10px;width:100%}
+.game-header h1{
+  font-size:clamp(22px,5vw,38px);color:#fff;letter-spacing:2px;
+  text-shadow:0 3px 0 #c62828,0 0 24px rgba(255,87,34,.45);
+}
+.game-header .subtitle{font-size:clamp(12px,2.5vw,16px);color:#ffab91;margin-top:3px}
+#charSelect .char-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0;width:100%;max-width:520px}
+.char-card{
+  background:#fff;border-radius:20px;padding:12px 8px 10px;cursor:pointer;text-align:center;
+  box-shadow:0 4px 12px rgba(0,0,0,.2);transition:all .2s;border:3px solid transparent;
+}
+.char-card:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.char-card.selected{border-color:#e53935;background:#ffebee}
+.char-card.key-focus{box-shadow:0 0 0 3px #e53935,0 6px 20px rgba(0,0,0,.25);transform:translateY(-3px)}
+.char-card .char-preview{
+  width:64px;height:64px;margin:0 auto 6px;border-radius:50%;background:#f0ebe3;
+  display:flex;align-items:center;justify-content:center;font-size:36px;overflow:hidden;
+}
+.char-card .char-preview img{width:100%;height:100%;object-fit:cover}
+.char-card .char-name{font-size:13px;color:#5a3e1b;font-weight:bold}
+.btn-start{
+  background:linear-gradient(180deg,#ff7043,#e53935);color:#fff;border:none;border-radius:20px;
+  padding:14px 48px;font-size:20px;font-weight:bold;cursor:pointer;box-shadow:0 4px 0 #b71c1c;font-family:inherit;margin-top:4px;
+}
+.btn-start:active{transform:translateY(2px);box-shadow:0 2px 0 #b71c1c}
+.btn-home{
+  background:#ddd;color:#5a3e1b;border:none;border-radius:14px;padding:10px 20px;
+  font-size:16px;font-weight:bold;cursor:pointer;font-family:inherit;box-shadow:0 3px 0 #bbb;
+}
+.btn-home:active{transform:translateY(2px)}
+.btn-pause{
+  background:#ffc107;color:#5a3e1b;border:none;border-radius:14px;padding:8px 14px;
+  font-size:14px;font-weight:bold;cursor:pointer;font-family:inherit;box-shadow:0 3px 0 #cc9a06;margin-right:6px;
+}
+.btn-pause:active{transform:translateY(2px)}
+.info-bar{
+  display:flex;justify-content:space-between;align-items:center;width:100%;max-width:700px;
+  background:rgba(255,255,255,.9);border-radius:16px;padding:8px 16px;margin-bottom:8px;
+  box-shadow:0 2px 8px rgba(0,0,0,.15);gap:8px;flex-wrap:wrap;
+}
+.info-bar .info-item{display:flex;align-items:center;gap:5px;font-size:clamp(13px,2.5vw,16px);color:#5a3e1b;font-weight:bold}
+.game-wrapper{
+  position:relative;width:100%;max-width:700px;aspect-ratio:3/4;border-radius:20px;overflow:hidden;
+  box-shadow:0 8px 32px rgba(0,0,0,.45),0 0 0 4px rgba(255,255,255,.15);touch-action:none;background:#263238;
+}
+#gameCanvas{display:block;width:100%;height:100%}
+#hudOverlay{
+  position:absolute;inset:0;pointer-events:none;z-index:5;
+}
+#hudScore{
+  position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  font-size:clamp(22px,5.5vw,40px);font-weight:bold;color:#fff;
+  text-shadow:2px 2px 0 rgba(0,0,0,.5);text-align:center;
+}
+#hudSpeed{
+  position:absolute;top:48px;left:50%;transform:translateX(-50%);
+  font-size:clamp(12px,2.5vw,15px);color:#ffeb3b;font-weight:bold;
+  text-shadow:1px 1px 0 rgba(0,0,0,.4);
+}
+#readyMsg{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);
+  font-size:clamp(16px,3.5vw,24px);color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,.4);
+  text-align:center;font-weight:bold;line-height:1.6;
+}
+#readyMsg .tap-icon{font-size:clamp(36px,9vw,56px);display:block;margin-bottom:8px;animation:bounce 1s infinite}
+#pauseMsg{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-size:clamp(22px,5vw,32px);color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,.4);
+  font-weight:bold;display:none;background:rgba(0,0,0,.55);padding:16px 32px;border-radius:20px;
+}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+#gameOverOverlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.65);display:none;
+  align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(3px);
+}
+#gameOverOverlay.show{display:flex}
+.win-card{
+  background:#fff;border-radius:32px;padding:32px 28px 24px;text-align:center;
+  max-width:400px;width:90%;box-shadow:0 12px 48px rgba(0,0,0,.35);
+  animation:popIn .4s cubic-bezier(.175,.885,.32,1.275);
+}
+@keyframes popIn{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+.win-card .big-emoji{font-size:72px;margin-bottom:8px}
+.win-card h2{font-size:28px;color:#c62828;margin-bottom:4px}
+.win-card .score-big{font-size:52px;font-weight:bold;color:#e53935;margin:8px 0}
+.win-card .best-label{font-size:16px;color:#8b6b3d;margin-bottom:16px}
+.win-card .best-label span{color:#5a3e1b;font-weight:bold}
+.win-card .new-best{
+  display:inline-block;background:#ffd700;color:#5a3e1b;padding:4px 12px;border-radius:12px;
+  font-size:14px;font-weight:bold;margin-bottom:10px;animation:pulse 1s infinite;
+}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.win-card .btn-group{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.win-card button{
+  padding:10px 24px;border:none;border-radius:14px;font-size:16px;font-weight:bold;
+  cursor:pointer;font-family:inherit;box-shadow:0 3px 0 rgba(0,0,0,.15);
+}
+.win-card button:active{transform:translateY(2px)}
+.win-card .btn-again{background:#e53935;color:#fff;box-shadow:0 3px 0 #b71c1c}
+.win-card .btn-home{background:#ddd;color:#5a3e1b;box-shadow:0 3px 0 #bbb}
+.touch-pad{
+  display:none;width:100%;max-width:700px;margin-top:10px;justify-content:space-between;gap:12px;
+}
+@media(max-width:768px),(pointer:coarse){.touch-pad{display:flex}}
+.lane-btn{
+  flex:1;border:none;border-radius:16px;padding:16px 8px;font-size:28px;font-weight:bold;
+  cursor:pointer;font-family:inherit;color:#fff;
+  background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.08));
+  border:2px solid rgba(255,255,255,.25);backdrop-filter:blur(4px);
+}
+.lane-btn:active{background:rgba(255,255,255,.35);transform:scale(.97)}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="charSelect" class="page active">
+    <div class="game-header">
+      <h1>🏎️ 极速赛车 🏁</h1>
+      <div class="subtitle">选择车手，躲避障碍，挑战最远距离！</div>
+    </div>
+    <div class="char-grid" id="charGrid"></div>
+    <button class="btn-start" onclick="startGame()">出发！🏁</button>
+    <div style="margin-top:12px"><button class="btn-home" onclick="location.href='index.html'">🏠 返回菜单</button></div>
+  </div>
+
+  <div id="gameUI" class="page">
+    <div class="info-bar">
+      <div class="info-item"><span id="charEmojiDisplay">🐰</span><span id="charNameDisplay">beta</span></div>
+      <div class="info-item">❤️ <span id="livesDisplay">3</span></div>
+      <div class="info-item">⭐ <span id="coinsDisplay">0</span></div>
+      <div class="info-item">🏆 <span id="bestScoreDisplay">0</span></div>
+      <div style="display:flex">
+        <button class="btn-pause" id="btnPause" onclick="togglePause()">⏸️</button>
+        <button class="btn-home" onclick="goHome()">🏠 菜单</button>
+      </div>
+    </div>
+    <div class="game-wrapper" id="gameWrapper">
+      <canvas id="gameCanvas"></canvas>
+      <div id="hudOverlay">
+        <div id="hudScore">0 m</div>
+        <div id="hudSpeed">0 km/h</div>
+        <div id="readyMsg"><span class="tap-icon">👆</span>← → 换道躲避车辆<br>收集星星得分！</div>
+        <div id="pauseMsg">⏸ 已暂停</div>
+      </div>
+    </div>
+    <div class="touch-pad">
+      <button class="lane-btn" id="btnLeft">◀</button>
+      <button class="lane-btn" id="btnRight">▶</button>
+    </div>
+  </div>
+
+  <div id="gameOverOverlay">
+    <div class="win-card">
+      <div class="big-emoji" id="goEmoji">💥</div>
+      <h2>比赛结束</h2>
+      <div id="newBestBadge" class="new-best" style="display:none">🎉 新纪录！</div>
+      <div class="score-big" id="goScore">0 m</div>
+      <div class="best-label">🏆 最远距离: <span id="goBest">0</span> m</div>
+      <div class="btn-group">
+        <button class="btn-again" onclick="restartGame()">再来一局 🔄</button>
+        <button class="btn-home" onclick="goHome()">🏠 选角色</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var CHARS = [
+  {id:"a", nm:"beta",   em:"🐰", co:"#FFB7C5", img:"role/beta2.JPG"},
+  {id:"b", nm:"dad",    em:"🦊", co:"#FFD700", img:"role/dad.JPG"},
+  {id:"c", nm:"mum",    em:"👩", co:"#FF69B4", img:"role/mum.JPG"},
+  {id:"i", nm:"Duggee", em:"🐶", co:"#FFB347", img:"role/duggee.png"},
+  {id:"j", nm:"Betty",  em:"🐙", co:"#FF69B4", img:"role/betty.png"},
+  {id:"k", nm:"Happy",  em:"🐸", co:"#90EE90", img:"role/happy.png"},
+  {id:"l", nm:"Norrie", em:"🐭", co:"#87CEEB", img:"role/norrie.png"},
+  {id:"m", nm:"Roly",   em:"🐹", co:"#DDA0DD", img:"role/roly.png"},
+  {id:"n", nm:"Tag",    em:"🦏", co:"#FFD700", img:"role/tag.png"}
+];
+
+var CAR_COLORS = ["#e53935","#1e88e5","#43a047","#fb8c00","#8e24aa","#00acc1","#fdd835"];
+var LANES = 3;
+
+var sel = null, charKeyFocus = 0, imgCache = {};
+var canvas, ctx, W, H;
+var player, entities, particles, roadOffset;
+var distance, coins, lives, bestScore, speed, maxSpeed;
+var gameState, frameCount, spawnTimer, coinTimer;
+var keys = {}, gameLoopId = null, prevStateForPause = null;
+var invincible = 0, shakeFrames = 0, inputBound = false;
+var laneX = [];
+
+var audioCtx = null;
+function unlockAudio(){
+  if(!audioCtx){ try{ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){} }
+  if(audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+}
+function playTone(freq, dur, type, vol){
+  if(!audioCtx) return;
+  try{
+    var osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+    osc.type = type || "sine";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol || 0.28, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + dur);
+  }catch(e){}
+}
+function playLane(){ playTone(520, 0.06, "sine", 0.22); }
+function playCoin(){
+  playTone(880, 0.08, "sine", 0.3);
+  setTimeout(function(){ playTone(1100, 0.1, "sine", 0.28); }, 70);
+}
+function playCrash(){
+  playTone(160, 0.3, "sawtooth", 0.35);
+  setTimeout(function(){ playTone(90, 0.25, "sawtooth", 0.3); }, 100);
+}
+function playSelect(){
+  playTone(660, 0.08, "sine", 0.25);
+  setTimeout(function(){ playTone(880, 0.1, "sine", 0.25); }, 60);
+}
+function playStart(){
+  playTone(440, 0.1, "sine", 0.28);
+  setTimeout(function(){ playTone(660, 0.1, "sine", 0.28); }, 80);
+  setTimeout(function(){ playTone(880, 0.15, "sine", 0.3); }, 160);
+}
+function playNewBest(){
+  playTone(880, 0.12, "sine", 0.32);
+  setTimeout(function(){ playTone(1100, 0.12, "sine", 0.32); }, 120);
+  setTimeout(function(){ playTone(1320, 0.2, "sine", 0.32); }, 240);
+}
+
+document.addEventListener("click", unlockAudio, {once:false});
+document.addEventListener("touchstart", unlockAudio, {once:false, passive:true});
+document.addEventListener("keydown", unlockAudio, {once:false});
+
+function selectCharByIndex(idx){
+  if(idx < 0 || idx >= CHARS.length) return;
+  charKeyFocus = idx; sel = CHARS[idx];
+  var cards = document.querySelectorAll("#charGrid .char-card");
+  for(var k = 0; k < cards.length; k++) cards[k].classList.remove("selected", "key-focus");
+  if(cards[idx]) cards[idx].classList.add("selected", "key-focus");
+}
+function buildCharGrid(){
+  var grid = document.getElementById("charGrid");
+  grid.innerHTML = "";
+  for(var i = 0; i < CHARS.length; i++){
+    (function(ch, idx){
+      var card = document.createElement("div");
+      card.className = "char-card";
+      var preview = document.createElement("div");
+      preview.className = "char-preview";
+      if(ch.img){
+        var img = new Image();
+        img.onload = function(){ imgCache[ch.id] = img; };
+        img.src = ch.img;
+        var imgEl = document.createElement("img");
+        imgEl.src = ch.img;
+        imgEl.onerror = function(){ preview.textContent = ch.em; imgEl.remove(); };
+        preview.appendChild(imgEl);
+      } else {
+        preview.textContent = ch.em;
+      }
+      var name = document.createElement("div");
+      name.className = "char-name";
+      name.textContent = ch.nm;
+      card.appendChild(preview); card.appendChild(name);
+      card.onclick = function(){ unlockAudio(); playSelect(); selectCharByIndex(idx); };
+      grid.appendChild(card);
+      if(idx === 0){ card.classList.add("selected"); sel = ch; }
+    })(CHARS[i], i);
+  }
+}
+
+function loadBest(){
+  try{ bestScore = parseInt(localStorage.getItem("racingBest") || "0", 10) || 0; }
+  catch(e){ bestScore = 0; }
+  document.getElementById("bestScoreDisplay").textContent = bestScore;
+}
+function saveBest(){
+  if(distance > bestScore){
+    bestScore = distance;
+    try{ localStorage.setItem("racingBest", String(bestScore)); }catch(e){}
+  }
+}
+
+function resizeCanvas(){
+  var wrap = document.getElementById("gameWrapper");
+  var rect = wrap.getBoundingClientRect();
+  var dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = Math.floor(rect.width * dpr);
+  H = Math.floor(rect.height * dpr);
+  canvas.width = W;
+  canvas.height = H;
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  var roadW = W * 0.82;
+  var roadL = (W - roadW) / 2;
+  laneX = [];
+  for(var i = 0; i < LANES; i++){
+    laneX.push(roadL + roadW * (i + 0.5) / LANES);
+  }
+}
+
+function resetGame(){
+  player = { lane: 1, x: 0, targetLane: 1, tilt: 0 };
+  entities = [];
+  particles = [];
+  roadOffset = 0;
+  distance = 0;
+  coins = 0;
+  lives = 3;
+  speed = 4;
+  maxSpeed = 14;
+  frameCount = 0;
+  spawnTimer = 0;
+  coinTimer = 0;
+  invincible = 0;
+  shakeFrames = 0;
+  updateHUD();
+}
+
+function updateHUD(){
+  document.getElementById("hudScore").textContent = Math.floor(distance) + " m";
+  document.getElementById("hudSpeed").textContent = Math.floor(speed * 18) + " km/h";
+  document.getElementById("livesDisplay").textContent = lives;
+  document.getElementById("coinsDisplay").textContent = coins;
+  document.getElementById("bestScoreDisplay").textContent = bestScore;
+  if(sel){
+    document.getElementById("charEmojiDisplay").textContent = sel.em;
+    document.getElementById("charNameDisplay").textContent = sel.nm;
+  }
+}
+
+function laneChange(dir){
+  if(gameState !== "playing") return;
+  var next = player.targetLane + dir;
+  if(next >= 0 && next < LANES){
+    player.targetLane = next;
+    player.tilt = dir * 0.35;
+    playLane();
+  }
+}
+
+function spawnEnemy(){
+  var lane = Math.floor(Math.random() * LANES);
+  var color = CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)];
+  entities.push({ type:"enemy", lane: lane, z: 1.15, color: color, wobble: Math.random() * Math.PI * 2 });
+}
+
+function spawnCoin(){
+  var lane = Math.floor(Math.random() * LANES);
+  entities.push({ type:"coin", lane: lane, z: 1.12, spin: 0 });
+}
+
+function addParticles(x, y, color, n){
+  for(var i = 0; i < n; i++){
+    particles.push({
+      x: x, y: y,
+      vx: (Math.random() - 0.5) * 8,
+      vy: (Math.random() - 0.5) * 8 - 2,
+      life: 20 + Math.random() * 15,
+      color: color,
+      size: 3 + Math.random() * 4
+    });
+  }
+}
+
+function projectZ(z){
+  var horizon = H * 0.28;
+  var playY = H * 0.88;
+  var t = Math.pow(Math.max(0, Math.min(1, z)), 1.6);
+  var y = horizon + (playY - horizon) * t;
+  var scale = 0.12 + 0.88 * t;
+  return { y: y, scale: scale, t: t };
+}
+
+function drawRoad(){
+  var horizon = H * 0.28;
+  var roadL = (W - W * 0.82) / 2;
+  var roadR = W - roadL;
+  var grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, "#87ceeb");
+  grad.addColorStop(0.35, "#b0bec5");
+  grad.addColorStop(0.36, "#546e7a");
+  grad.addColorStop(1, "#37474f");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = "#2e7d32";
+  ctx.beginPath();
+  ctx.moveTo(0, horizon);
+  ctx.lineTo(roadL, horizon);
+  ctx.lineTo(roadL + W * 0.04, H);
+  ctx.lineTo(0, H);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(W, horizon);
+  ctx.lineTo(roadR, horizon);
+  ctx.lineTo(roadR - W * 0.04, H);
+  ctx.lineTo(W, H);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = "#455a64";
+  ctx.beginPath();
+  ctx.moveTo(roadL, horizon);
+  ctx.lineTo(roadR, horizon);
+  ctx.lineTo(roadR - W * 0.04, H);
+  ctx.lineTo(roadL + W * 0.04, H);
+  ctx.closePath();
+  ctx.fill();
+
+  var dashLen = 36 + speed * 2;
+  roadOffset = (roadOffset + speed * 1.4) % dashLen;
+  for(var i = 0; i < LANES - 1; i++){
+    var lx = laneX[i] + (laneX[i + 1] - laneX[i]) / 2;
+    for(var d = -1; d < 18; d++){
+      var z1 = d / 16;
+      var z2 = (d + 0.45) / 16;
+      var p1 = projectZ(z1);
+      var p2 = projectZ(z2);
+      var x1 = lx * p1.scale + (W / 2) * (1 - p1.scale);
+      var x2 = lx * p2.scale + (W / 2) * (1 - p2.scale);
+      var seg = ((d * dashLen / 16) + roadOffset) % dashLen;
+      if(seg < dashLen * 0.55){
+        ctx.strokeStyle = "rgba(255,255,255,0.75)";
+        ctx.lineWidth = Math.max(2, 4 * p1.scale);
+        ctx.beginPath();
+        ctx.moveTo(x1, p1.y);
+        ctx.lineTo(x2, p2.y);
+        ctx.stroke();
+      }
+    }
+  }
+
+  ctx.fillStyle = "#ffeb3b";
+  for(var s = 0; s < 6; s++){
+    var side = s % 2 === 0 ? roadL : roadR;
+    var z = ((s * 0.17 + frameCount * 0.004) % 1);
+    var p = projectZ(z);
+    var x = side * p.scale + (W / 2) * (1 - p.scale);
+    ctx.beginPath();
+    ctx.arc(x, p.y, 3 * p.scale, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawCar(x, y, scale, color, isPlayer){
+  var w = 42 * scale, h = 72 * scale;
+  ctx.save();
+  ctx.translate(x, y);
+  if(isPlayer) ctx.rotate(player.tilt * 0.25);
+  ctx.fillStyle = "rgba(0,0,0,0.25)";
+  ctx.fillRect(-w * 0.42, -h * 0.05, w * 0.84, h * 0.92);
+
+  ctx.fillStyle = color;
+  roundRect(-w / 2, -h / 2, w, h, 8 * scale);
+
+  ctx.fillStyle = "rgba(255,255,255,0.55)";
+  roundRect(-w * 0.32, -h * 0.38, w * 0.64, h * 0.22, 5 * scale);
+
+  ctx.fillStyle = "#222";
+  roundRect(-w * 0.38, h * 0.08, w * 0.2, h * 0.22, 3 * scale);
+  roundRect(w * 0.18, h * 0.08, w * 0.2, h * 0.22, 3 * scale);
+
+  if(isPlayer){
+    ctx.fillStyle = "#ff1744";
+    ctx.fillRect(-w * 0.12, -h * 0.48, w * 0.24, h * 0.08);
+    if(sel){
+      ctx.font = (22 * scale) + "px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(sel.em, 0, -h * 0.12);
+    }
+    if(invincible > 0 && Math.floor(invincible / 4) % 2 === 0){
+      ctx.globalAlpha = 0.45;
+      roundRect(-w / 2, -h / 2, w, h, 8 * scale);
+      ctx.globalAlpha = 1;
+    }
+  } else {
+    ctx.fillStyle = "#fafafa";
+    ctx.fillRect(-w * 0.1, h * 0.32, w * 0.2, h * 0.08);
+  }
+  ctx.restore();
+}
+
+function roundRect(x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawCoin(x, y, scale, spin){
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(Math.abs(Math.cos(spin)), 1);
+  ctx.font = (34 * scale) + "px sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("⭐", 0, 0);
+  ctx.restore();
+}
+
+function drawParticles(){
+  for(var i = particles.length - 1; i >= 0; i--){
+    var p = particles[i];
+    p.x += p.vx; p.y += p.vy; p.vy += 0.25; p.life--;
+    if(p.life <= 0){ particles.splice(i, 1); continue; }
+    ctx.globalAlpha = p.life / 35;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+
+function updatePlayer(){
+  player.lane += (player.targetLane - player.lane) * 0.22;
+  player.tilt *= 0.82;
+  var p = projectZ(0.02);
+  player.x = laneX[Math.round(player.lane)] * p.scale + (W / 2) * (1 - p.scale);
+  if(Math.abs(player.targetLane - player.lane) < 0.02) player.lane = player.targetLane;
+}
+
+function updateEntities(){
+  for(var i = entities.length - 1; i >= 0; i--){
+    var e = entities[i];
+    e.z -= speed * 0.0085;
+    if(e.type === "coin") e.spin += 0.14;
+    if(e.type === "enemy") e.wobble += 0.08;
+    if(e.z < -0.05){ entities.splice(i, 1); continue; }
+
+    var lanePos = e.lane + (e.type === "enemy" ? Math.sin(e.wobble) * 0.03 : 0);
+    var pr = projectZ(e.z);
+    var ex = (laneX[0] + (laneX[LANES - 1] - laneX[0]) * (lanePos / (LANES - 1))) * pr.scale + (W / 2) * (1 - pr.scale);
+    var ey = pr.y;
+    e._x = ex; e._y = ey; e._scale = pr.scale;
+
+    if(e.z < 0.12 && e.z > 0.02){
+      var laneDist = Math.abs(lanePos - player.lane);
+      if(laneDist < 0.42){
+        if(e.type === "enemy" && invincible <= 0){
+          lives--;
+          invincible = 90;
+          shakeFrames = 12;
+          playCrash();
+          addParticles(player.x, H * 0.82, "#ff5252", 16);
+          entities.splice(i, 1);
+          if(lives <= 0) endGame();
+        } else if(e.type === "coin"){
+          coins++;
+          distance += 25;
+          playCoin();
+          addParticles(ex, ey, "#ffd700", 8);
+          entities.splice(i, 1);
+        }
+      }
+    }
+  }
+}
+
+function drawEntities(){
+  entities.sort(function(a, b){ return a.z - b.z; });
+  for(var i = 0; i < entities.length; i++){
+    var e = entities[i];
+    if(e.type === "enemy") drawCar(e._x, e._y, e._scale, e.color, false);
+    else drawCoin(e._x, e._y, e._scale, e.spin);
+  }
+}
+
+function gameLoop(){
+  if(gameState !== "playing" && gameState !== "ready") return;
+  frameCount++;
+  if(gameState === "playing"){
+    distance += speed * 0.35;
+    if(speed < maxSpeed) speed += 0.0025;
+    spawnTimer++;
+    var interval = Math.max(28, 90 - speed * 4);
+    if(spawnTimer >= interval){
+      spawnTimer = 0;
+      spawnEnemy();
+      if(Math.random() < 0.35) spawnEnemy();
+    }
+    coinTimer++;
+    if(coinTimer >= 55){
+      coinTimer = 0;
+      if(Math.random() < 0.65) spawnCoin();
+    }
+    if(invincible > 0) invincible--;
+    updatePlayer();
+    updateEntities();
+    updateHUD();
+  }
+
+  var shakeX = 0, shakeY = 0;
+  if(shakeFrames > 0){
+    shakeX = (Math.random() - 0.5) * 10;
+    shakeY = (Math.random() - 0.5) * 10;
+    shakeFrames--;
+  }
+
+  ctx.save();
+  ctx.translate(shakeX, shakeY);
+  drawRoad();
+  drawEntities();
+  var pp = projectZ(0.02);
+  drawCar(player.x, pp.y, pp.scale, sel ? sel.co : "#e53935", true);
+  drawParticles();
+  ctx.restore();
+
+  gameLoopId = requestAnimationFrame(gameLoop);
+}
+
+function bindInput(){
+  if(inputBound) return;
+  inputBound = true;
+  document.addEventListener("keydown", function(e){
+    if(e.key === "ArrowLeft" || e.key === "a" || e.key === "A"){ e.preventDefault(); laneChange(-1); }
+    if(e.key === "ArrowRight" || e.key === "d" || e.key === "D"){ e.preventDefault(); laneChange(1); }
+    if(e.key === " " || e.key === "Enter"){
+      if(gameState === "ready"){ beginPlay(); e.preventDefault(); }
+    }
+    if(e.key === "p" || e.key === "P" || e.key === "Escape") togglePause();
+  });
+  var wrap = document.getElementById("gameWrapper");
+  var touchStartX = 0;
+  wrap.addEventListener("touchstart", function(e){
+    if(gameState === "ready"){ beginPlay(); return; }
+    touchStartX = e.touches[0].clientX;
+  }, {passive:true});
+  wrap.addEventListener("touchend", function(e){
+    if(gameState !== "playing") return;
+    var dx = (e.changedTouches[0].clientX - touchStartX);
+    if(Math.abs(dx) > 24) laneChange(dx > 0 ? 1 : -1);
+  }, {passive:true});
+  wrap.addEventListener("click", function(){
+    if(gameState === "ready") beginPlay();
+  });
+  document.getElementById("btnLeft").addEventListener("touchstart", function(e){ e.preventDefault(); laneChange(-1); });
+  document.getElementById("btnRight").addEventListener("touchstart", function(e){ e.preventDefault(); laneChange(1); });
+  document.getElementById("btnLeft").addEventListener("click", function(){ laneChange(-1); });
+  document.getElementById("btnRight").addEventListener("click", function(){ laneChange(1); });
+}
+
+function beginPlay(){
+  if(gameState !== "ready") return;
+  gameState = "playing";
+  document.getElementById("readyMsg").style.display = "none";
+  playStart();
+}
+
+function startGame(){
+  if(!sel) return;
+  unlockAudio();
+  document.getElementById("charSelect").classList.remove("active");
+  document.getElementById("gameUI").classList.add("active");
+  document.getElementById("gameOverOverlay").classList.remove("show");
+  document.getElementById("readyMsg").style.display = "block";
+  document.getElementById("pauseMsg").style.display = "none";
+  canvas = document.getElementById("gameCanvas");
+  ctx = canvas.getContext("2d");
+  resizeCanvas();
+  resetGame();
+  gameState = "ready";
+  bindInput();
+  if(gameLoopId) cancelAnimationFrame(gameLoopId);
+  gameLoop();
+  window.addEventListener("resize", resizeCanvas);
+}
+
+function togglePause(){
+  if(gameState === "playing"){
+    prevStateForPause = "playing";
+    gameState = "paused";
+    document.getElementById("pauseMsg").style.display = "block";
+    document.getElementById("btnPause").textContent = "▶️";
+  } else if(gameState === "paused"){
+    gameState = prevStateForPause || "playing";
+    document.getElementById("pauseMsg").style.display = "none";
+    document.getElementById("btnPause").textContent = "⏸️";
+    gameLoop();
+  }
+}
+
+function endGame(){
+  gameState = "over";
+  if(gameLoopId) cancelAnimationFrame(gameLoopId);
+  saveBest();
+  var finalScore = Math.floor(distance);
+  document.getElementById("goScore").textContent = finalScore + " m";
+  document.getElementById("goBest").textContent = bestScore;
+  document.getElementById("goEmoji").textContent = lives <= 0 ? "💥" : "🏁";
+  var isNew = finalScore >= bestScore && finalScore > 0;
+  document.getElementById("newBestBadge").style.display = isNew ? "inline-block" : "none";
+  if(isNew) playNewBest();
+  document.getElementById("gameOverOverlay").classList.add("show");
+}
+
+function restartGame(){
+  document.getElementById("gameOverOverlay").classList.remove("show");
+  resetGame();
+  gameState = "ready";
+  document.getElementById("readyMsg").style.display = "block";
+  gameLoop();
+}
+
+function goHome(){
+  if(gameLoopId) cancelAnimationFrame(gameLoopId);
+  gameState = "menu";
+  document.getElementById("gameUI").classList.remove("active");
+  document.getElementById("charSelect").classList.add("active");
+  document.getElementById("gameOverOverlay").classList.remove("show");
+}
+
+document.addEventListener("keydown", function(e){
+  if(!document.getElementById("charSelect").classList.contains("active")) return;
+  if(e.key === "ArrowRight"){ e.preventDefault(); selectCharByIndex((charKeyFocus + 1) % CHARS.length); }
+  if(e.key === "ArrowLeft"){ e.preventDefault(); selectCharByIndex((charKeyFocus - 1 + CHARS.length) % CHARS.length); }
+  if(e.key === "ArrowDown"){ e.preventDefault(); selectCharByIndex((charKeyFocus + 4) % CHARS.length); }
+  if(e.key === "ArrowUp"){ e.preventDefault(); selectCharByIndex((charKeyFocus - 4 + CHARS.length) % CHARS.length); }
+  if(e.key === "Enter"){ e.preventDefault(); startGame(); }
+});
+
+buildCharGrid();
+loadBest();
+</script>
+</body>
+</html>
