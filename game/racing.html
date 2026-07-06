@@ -4,15 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<title>小塔小游戏 - 极速赛车</title>
+<title>小塔小游戏 - 轻松赛车</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{
   font-family:"Comic Sans MS","Chalkboard SE","PingFang SC","Microsoft YaHei",sans-serif;
-  background:
-    radial-gradient(circle at 20% 15%, rgba(255,87,34,.2), transparent 45%),
-    radial-gradient(circle at 80% 85%, rgba(33,150,243,.18), transparent 42%),
-    linear-gradient(160deg,#1a1a2e 0%,#16213e 40%,#0f3460 100%);
+  background:linear-gradient(180deg,#e3f2fd 0%,#f1f8e9 55%,#fff8e1 100%);
   min-height:100vh;display:flex;justify-content:center;align-items:center;
   overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent;
 }
@@ -21,10 +18,10 @@ body{
 .page.active{display:flex}
 .game-header{text-align:center;margin-bottom:10px;width:100%}
 .game-header h1{
-  font-size:clamp(22px,5vw,38px);color:#fff;letter-spacing:2px;
-  text-shadow:0 3px 0 #c62828,0 0 24px rgba(255,87,34,.45);
+  font-size:clamp(22px,5vw,38px);color:#5d4037;letter-spacing:2px;
+  text-shadow:0 2px 0 rgba(255,255,255,.8);
 }
-.game-header .subtitle{font-size:clamp(12px,2.5vw,16px);color:#ffab91;margin-top:3px}
+.game-header .subtitle{font-size:clamp(12px,2.5vw,16px);color:#8d6e63;margin-top:3px}
 #charSelect .char-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:16px 0;width:100%;max-width:520px}
 .char-card{
   background:#fff;border-radius:20px;padding:12px 8px 10px;cursor:pointer;text-align:center;
@@ -39,17 +36,7 @@ body{
 }
 .char-card .char-preview img{width:100%;height:100%;object-fit:cover}
 .char-card .char-name{font-size:13px;color:#5a3e1b;font-weight:bold}
-.char-card .car-thumb{
-  width:38px;height:auto;margin:6px auto 0;display:block;
-  image-rendering:pixelated;image-rendering:crisp-edges;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2));
-}
-.load-overlay{
-  position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;
-  align-items:center;justify-content:center;z-index:200;color:#fff;
-  font-size:clamp(18px,4vw,24px);font-weight:bold;backdrop-filter:blur(4px);
-}
-.load-overlay.show{display:flex}
-.load-overlay .spin{font-size:48px;display:block;text-align:center;margin-bottom:10px;animation:bounce 1s infinite}
+.char-card .car-emoji{font-size:28px;margin-top:4px;line-height:1}
 .btn-start{
   background:linear-gradient(180deg,#ff7043,#e53935);color:#fff;border:none;border-radius:20px;
   padding:14px 48px;font-size:20px;font-weight:bold;cursor:pointer;box-shadow:0 4px 0 #b71c1c;font-family:inherit;margin-top:4px;
@@ -73,21 +60,21 @@ body{
 .info-bar .info-item{display:flex;align-items:center;gap:5px;font-size:clamp(13px,2.5vw,16px);color:#5a3e1b;font-weight:bold}
 .game-wrapper{
   position:relative;width:100%;max-width:700px;aspect-ratio:3/4;border-radius:20px;overflow:hidden;
-  box-shadow:0 8px 32px rgba(0,0,0,.45),0 0 0 4px rgba(255,255,255,.15);touch-action:none;background:#263238;
+  box-shadow:0 8px 24px rgba(93,64,55,.18);touch-action:none;background:#a5d6a7;
 }
-#gameCanvas{display:block;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges}
+#gameCanvas{display:block;width:100%;height:100%}
 #hudOverlay{
   position:absolute;inset:0;pointer-events:none;z-index:5;
 }
 #hudScore{
   position:absolute;top:10px;left:50%;transform:translateX(-50%);
-  font-size:clamp(22px,5.5vw,40px);font-weight:bold;color:#fff;
-  text-shadow:2px 2px 0 rgba(0,0,0,.5);text-align:center;
+  font-size:clamp(20px,5vw,34px);font-weight:bold;color:#fff;
+  text-shadow:0 1px 3px rgba(0,0,0,.25);text-align:center;
 }
 #hudSpeed{
-  position:absolute;top:48px;left:50%;transform:translateX(-50%);
-  font-size:clamp(12px,2.5vw,15px);color:#ffeb3b;font-weight:bold;
-  text-shadow:1px 1px 0 rgba(0,0,0,.4);
+  position:absolute;top:46px;left:50%;transform:translateX(-50%);
+  font-size:clamp(12px,2.5vw,14px);color:#fffde7;font-weight:bold;
+  text-shadow:0 1px 2px rgba(0,0,0,.2);
 }
 #hudCombo{
   position:absolute;top:72px;left:50%;transform:translateX(-50%);
@@ -99,18 +86,18 @@ body{
   position:absolute;top:10px;left:12px;display:flex;gap:6px;font-size:clamp(18px,4vw,24px);
 }
 #waveBanner{
-  position:absolute;top:38%;left:50%;transform:translate(-50%,-50%) scale(.8);
-  background:rgba(0,0,0,.6);color:#fff;padding:12px 28px;border-radius:20px;
-  font-size:clamp(18px,4vw,26px);font-weight:bold;opacity:0;transition:all .35s;
-  border:2px solid rgba(255,235,59,.6);pointer-events:none;
+  position:absolute;top:38%;left:50%;transform:translate(-50%,-50%);
+  background:rgba(255,255,255,.88);color:#5d4037;padding:12px 28px;border-radius:20px;
+  font-size:clamp(16px,3.5vw,22px);font-weight:bold;opacity:0;transition:opacity .4s;
+  border:2px solid rgba(129,199,132,.8);pointer-events:none;
 }
-#waveBanner.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#waveBanner.show{opacity:1}
 #readyMsg{
   position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);
-  font-size:clamp(16px,3.5vw,24px);color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,.4);
+  font-size:clamp(16px,3.5vw,22px);color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.25);
   text-align:center;font-weight:bold;line-height:1.6;
 }
-#readyMsg .tap-icon{font-size:clamp(36px,9vw,56px);display:block;margin-bottom:8px;animation:bounce 1s infinite}
+#readyMsg .tap-icon{font-size:clamp(32px,8vw,48px);display:block;margin-bottom:8px}
 #pauseMsg{
   position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
   font-size:clamp(22px,5vw,32px);color:#fff;text-shadow:2px 2px 0 rgba(0,0,0,.4);
@@ -160,18 +147,16 @@ body{
   flex:0.8;background:linear-gradient(180deg,#fff176,#ffca28);
   color:#5a3e1b;border-color:rgba(255,235,59,.5);font-size:22px;
 }
-.lane-btn.nitro.active{box-shadow:0 0 16px rgba(255,235,59,.8);animation:pulse 0.5s infinite}
+.lane-btn.nitro.active{box-shadow:0 0 10px rgba(255,235,59,.45)}
 </style>
 </head>
 <body>
 
-<div id="loadOverlay" class="load-overlay"><div><span class="spin">🏎️</span>加载赛车贴图...</div></div>
-
 <div id="app">
   <div id="charSelect" class="page active">
     <div class="game-header">
-      <h1>🏎️ 极速赛车 🏁</h1>
-      <div class="subtitle">挑角色选赛车，换道超车攒连击！</div>
+      <h1>🚗 轻松赛车</h1>
+      <div class="subtitle">柔和画面、慢速行驶，不容易头晕！</div>
     </div>
     <div class="char-grid" id="charGrid"></div>
     <button class="btn-start" onclick="startGame()">出发！🏁</button>
@@ -198,7 +183,7 @@ body{
         <div id="hudCombo"></div>
         <div id="hudBuffs"></div>
         <div id="waveBanner"></div>
-        <div id="readyMsg"><span class="tap-icon">👆</span>← → 换道 · 空格/⚡ 氮气加速<br>吃道具、躲障碍、贴边超车加分！</div>
+        <div id="readyMsg"><span class="tap-icon">👆</span>← → 换道 · 空格/⚡ 慢慢加速<br>画面柔和，舒服地开！</div>
         <div id="pauseMsg">⏸ 已暂停</div>
       </div>
     </div>
@@ -237,28 +222,33 @@ var CHARS = [
   {id:"n", nm:"Tag",    em:"🦏", co:"#FFD700", img:"role/tag.png"}
 ];
 
-var KENNEY_COLORS = ["black","blue","green","red","yellow"];
+var CAR_COLORS = ["black","blue","green","red","yellow"];
 var CHAR_CAR = {a:"red", b:"yellow", c:"green", i:"blue", j:"red", k:"green", l:"blue", m:"yellow", n:"black"};
+var CAR_PALETTE = {
+  red:    {body:"#ef9a9a", dark:"#e57373", win:"#ffcdd2"},
+  yellow: {body:"#fff59d", dark:"#fff176", win:"#fffde7"},
+  green:  {body:"#a5d6a7", dark:"#81c784", win:"#e8f5e9"},
+  blue:   {body:"#90caf9", dark:"#64b5f6", win:"#e3f2fd"},
+  black:  {body:"#b0bec5", dark:"#90a4ae", win:"#eceff1"}
+};
+var ENEMY_EMOJI = ["🚗","🚙","🚕","🛻"];
 var ENEMY_STYLES = [
-  {id:"sedan", kind:"car", variant:1, small:false, w:0.95, h:1.2},
-  {id:"suv",   kind:"car", variant:3, small:false, w:1.02, h:1.25},
-  {id:"truck", kind:"car", variant:1, small:true,  w:1.08, h:1.3},
-  {id:"sport", kind:"car", variant:2, small:false, w:0.9,  h:1.15},
-  {id:"moto",  kind:"moto", w:0.72, h:1.05}
+  {id:"sedan", w:0.92, h:1.15},
+  {id:"suv",   w:1.0,  h:1.22},
+  {id:"truck", w:1.08, h:1.35},
+  {id:"sport", w:0.88, h:1.1},
+  {id:"moto",  w:0.72, h:1.0, emoji:"🏍️"}
 ];
-var POWERUP_SPRITE = {shield:"barrelBlue", nitro:"barrelRed", magnet:"lights", heart:"star"};
 var POWERUP_KINDS = ["shield","nitro","magnet","heart"];
 var LANES = 3;
-var ASSET = "assets/racing/PNG/";
 
 var sel = null, charKeyFocus = 0, imgCache = {};
-var spriteCache = {}, spritesReady = false, spritesLoading = false;
 var canvas, ctx, W, H;
 var player, entities, particles, roadOffset, floatTexts;
 var distance, coins, lives, bestScore, speed, maxSpeed;
 var gameState, frameCount, spawnTimer, itemTimer, wave;
 var gameLoopId = null, prevStateForPause = null;
-var invincible = 0, shakeFrames = 0, inputBound = false, nitroHeld = false;
+var invincible = 0, inputBound = false, nitroHeld = false;
 var laneX = [], roadL = 0, roadR = 0, playerY = 0, carW = 0, carH = 0;
 var combo = 0, comboTimer = 0, buffs = {shield:0, nitro:0, magnet:0};
 var waveBannerTimer = 0, skidMarks = [];
@@ -354,12 +344,10 @@ function buildCharGrid(){
       var name = document.createElement("div");
       name.className = "char-name";
       name.textContent = ch.nm;
-      var carThumb = document.createElement("img");
-      carThumb.className = "car-thumb";
-      carThumb.alt = "";
-      carThumb.src = ASSET + "Cars/car_" + (CHAR_CAR[ch.id] || "red") + "_1.png";
-      carThumb.onerror = function(){ carThumb.style.display = "none"; };
-      card.appendChild(preview); card.appendChild(name); card.appendChild(carThumb);
+      var carEmoji = document.createElement("div");
+      carEmoji.className = "car-emoji";
+      carEmoji.textContent = "🚗";
+      card.appendChild(preview); card.appendChild(name); card.appendChild(carEmoji);
       card.onclick = function(){ unlockAudio(); playSelect(); selectCharByIndex(idx); };
       grid.appendChild(card);
       if(idx === 0){ card.classList.add("selected"); sel = ch; }
@@ -400,76 +388,119 @@ function resizeCanvas(){
   carH = carW * 1.85;
 }
 
-function loadImage(key, path){
-  return new Promise(function(resolve){
-    var img = new Image();
-    img.onload = function(){ spriteCache[key] = img; resolve(); };
-    img.onerror = function(){ resolve(); };
-    img.src = path;
-  });
-}
-
-function loadSprites(){
-  if(spritesReady) return Promise.resolve();
-  if(spritesLoading) return new Promise(function(resolve){
-    var wait = setInterval(function(){
-      if(spritesReady){ clearInterval(wait); resolve(); }
-    }, 50);
-  });
-  spritesLoading = true;
-  var jobs = [];
-  var ci, vi;
-  for(ci = 0; ci < KENNEY_COLORS.length; ci++){
-    jobs.push(loadImage("moto_"+KENNEY_COLORS[ci], ASSET+"Motorcycles/motorcycle_"+KENNEY_COLORS[ci]+".png"));
-    for(vi = 1; vi <= 5; vi++){
-      jobs.push(loadImage("car_"+KENNEY_COLORS[ci]+"_"+vi, ASSET+"Cars/car_"+KENNEY_COLORS[ci]+"_"+vi+".png"));
-      jobs.push(loadImage("car_"+KENNEY_COLORS[ci]+"_small_"+vi, ASSET+"Cars/car_"+KENNEY_COLORS[ci]+"_small_"+vi+".png"));
-    }
-  }
-  jobs.push(loadImage("grass1", ASSET+"Tiles/Grass/land_grass01.png"));
-  jobs.push(loadImage("grass2", ASSET+"Tiles/Grass/land_grass02.png"));
-  jobs.push(loadImage("grass3", ASSET+"Tiles/Grass/land_grass03.png"));
-  jobs.push(loadImage("grass4", ASSET+"Tiles/Grass/land_grass04.png"));
-  jobs.push(loadImage("road", ASSET+"Tiles/Asphalt road/road_asphalt03.png"));
-  jobs.push(loadImage("roadEdge", ASSET+"Tiles/Asphalt road/road_asphalt07.png"));
-  jobs.push(loadImage("oil", ASSET+"Objects/oil.png"));
-  jobs.push(loadImage("cone", ASSET+"Objects/cone_straight.png"));
-  jobs.push(loadImage("tree", ASSET+"Objects/tree_small.png"));
-  jobs.push(loadImage("treeBig", ASSET+"Objects/tree_large.png"));
-  jobs.push(loadImage("star", ASSET+"Objects/light_yellow.png"));
-  jobs.push(loadImage("skid", ASSET+"Objects/skidmark_short_1.png"));
-  jobs.push(loadImage("barrier", ASSET+"Objects/barrier_red_race.png"));
-  jobs.push(loadImage("tires", ASSET+"Objects/tires_red.png"));
-  jobs.push(loadImage("barrelBlue", ASSET+"Objects/barrel_blue.png"));
-  jobs.push(loadImage("barrelRed", ASSET+"Objects/barrel_red.png"));
-  jobs.push(loadImage("lights", ASSET+"Objects/lights.png"));
-  return Promise.all(jobs).then(function(){
-    spritesReady = true;
-    spritesLoading = false;
-  });
-}
-
-function driveFrame(){
-  var rate = (buffs.nitro > 0 || nitroHeld) ? 4 : 9;
-  return 1 + Math.floor(frameCount / rate) % 5;
-}
-
-function getCarImg(color, styleDef, frame){
-  if(styleDef && styleDef.kind === "moto"){
-    return spriteCache["moto_"+color] || spriteCache.moto_red || spriteCache.car_red_1;
-  }
-  var v = frame || (styleDef && styleDef.variant) || 1;
-  var small = styleDef && styleDef.small;
-  var key = small ? ("car_"+color+"_small_"+v) : ("car_"+color+"_"+v);
-  return spriteCache[key] || spriteCache.car_red_1;
-}
-
 function carDrawSize(styleDef){
   var sf = styleDef || ENEMY_STYLES[0];
-  var w = carW * sf.w;
-  var img = sf.kind === "moto" ? getCarImg("red", sf) : getCarImg("red", sf, 1);
-  var aspect = (img && img.height) ? img.height / img.width : 1.85;
-  return {w: w, h: w * aspect};
+  return {w: carW * sf.w, h: carW * sf.w * (sf.h || 1.2)};
+}
+
+function roundRectPath(x, y, w, h, r){
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+function drawRoad(){
+  var sky = ctx.createLinearGradient(0, 0, 0, H * 0.35);
+  sky.addColorStop(0, "#b3e5fc");
+  sky.addColorStop(1, "#e8f5e9");
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = "#c8e6c9";
+  ctx.fillRect(0, H * 0.2, W, H);
+
+  ctx.fillStyle = "#bdbdbd";
+  ctx.fillRect(roadL, 0, roadR - roadL, H);
+  ctx.fillStyle = "#fafafa";
+  ctx.fillRect(roadL - 8, 0, 8, H);
+  ctx.fillRect(roadR, 0, 8, H);
+
+  var dashLen = 56;
+  roadOffset = (roadOffset + speed * 0.42) % dashLen;
+  for(var i = 0; i < LANES - 1; i++){
+    var lx = roadL + (roadR - roadL) * (i + 1) / LANES;
+    for(var y = -dashLen; y < H + dashLen; y += dashLen){
+      var dy = y + roadOffset;
+      ctx.fillStyle = "rgba(255,255,255,0.75)";
+      ctx.fillRect(lx - 2, dy, 4, dashLen * 0.42);
+    }
+  }
+}
+
+function drawCalmCar(x, y, colorName, styleDef, isPlayer, facingDown){
+  var sf = styleDef || ENEMY_STYLES[0];
+  var pal = CAR_PALETTE[colorName] || CAR_PALETTE.red;
+  var w = carW * sf.w, h = carW * sf.w * (sf.h || 1.2);
+  var r = w * 0.22;
+
+  ctx.save();
+  ctx.translate(x, y);
+  if(facingDown) ctx.scale(1, -1);
+
+  ctx.fillStyle = "rgba(0,0,0,0.08)";
+  roundRectPath(-w / 2 + 3, -h / 2 + 5, w, h, r);
+  ctx.fill();
+
+  var grad = ctx.createLinearGradient(-w / 2, 0, w / 2, 0);
+  grad.addColorStop(0, pal.dark);
+  grad.addColorStop(0.5, pal.body);
+  grad.addColorStop(1, pal.dark);
+  ctx.fillStyle = grad;
+  roundRectPath(-w / 2, -h / 2, w, h, r);
+  ctx.fill();
+
+  ctx.fillStyle = pal.win;
+  roundRectPath(-w * 0.28, -h * 0.38, w * 0.56, h * 0.24, r * 0.5);
+  ctx.fill();
+
+  if(isPlayer && sel){
+    ctx.font = (w * 0.52) + "px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(sel.em, 0, -h * 0.02);
+  } else {
+    ctx.font = (w * 0.44) + "px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(sf.emoji || ENEMY_EMOJI[Math.abs(Math.floor(x)) % ENEMY_EMOJI.length], 0, -h * 0.02);
+  }
+
+  if(isPlayer && (invincible > 0 || buffs.shield > 0)){
+    ctx.strokeStyle = "rgba(100,181,246,0.55)";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, w * 0.62, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+  return {w: w, h: h};
+}
+
+function drawPickup(e){
+  var size = carW * 0.62;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  if(e.type === "coin"){
+    ctx.font = size + "px sans-serif";
+    ctx.fillText("⭐", e._x, e._y);
+  } else if(e.type === "oil"){
+    ctx.font = size + "px sans-serif";
+    ctx.fillText("🛢️", e._x, e._y);
+  } else if(e.type === "cone"){
+    ctx.font = size + "px sans-serif";
+    ctx.fillText("🚧", e._x, e._y);
+  } else if(e.type === "tire"){
+    ctx.font = size + "px sans-serif";
+    ctx.fillText("🛞", e._x, e._y);
+  } else {
+    var em = ({shield:"🛡️",nitro:"⚡",magnet:"🧲",heart:"❤️"})[e.type] || "✨";
+    ctx.font = size + "px sans-serif";
+    ctx.fillText(em, e._x, e._y);
+  }
 }
 
 function resetGame(){
@@ -482,8 +513,8 @@ function resetGame(){
   distance = 0;
   coins = 0;
   lives = 3;
-  speed = 1.6;
-  maxSpeed = 5.5;
+  speed = 1.2;
+  maxSpeed = 3.8;
   frameCount = 0;
   spawnTimer = 0;
   itemTimer = 0;
@@ -492,7 +523,6 @@ function resetGame(){
   comboTimer = 0;
   buffs = {shield:0, nitro:0, magnet:0};
   invincible = 0;
-  shakeFrames = 0;
   waveBannerTimer = 0;
   nitroHeld = false;
   updateHUD();
@@ -500,7 +530,7 @@ function resetGame(){
 
 function updateHUD(){
   document.getElementById("hudScore").textContent = Math.floor(distance) + " m";
-  var spd = speed * 12 * (buffs.nitro > 0 || nitroHeld ? 1.45 : 1);
+  var spd = speed * 12 * (buffs.nitro > 0 || nitroHeld ? 1.2 : 1);
   document.getElementById("hudSpeed").textContent = Math.floor(spd) + " km/h";
   document.getElementById("livesDisplay").textContent = lives;
   document.getElementById("coinsDisplay").textContent = coins;
@@ -529,200 +559,13 @@ function addFloatText(x, y, text, color){
   floatTexts.push({x:x, y:y, text:text, color:color || "#fff", life:42});
 }
 
-function drawSprite(img, x, y, w, h, flipY){
-  if(!img || !img.complete || !img.width) return;
-  ctx.save();
-  ctx.translate(x, y);
-  if(flipY) ctx.scale(1, -1);
-  ctx.drawImage(img, -w / 2, -h / 2, w, h);
-  ctx.restore();
-}
-
-function drawRoad(){
-  var tileS = Math.max(72, Math.floor(W / 5.5));
-
-  for(var gy = -tileS; gy < H + tileS; gy += tileS){
-    var scrollY = gy + ((roadOffset * 0.35) % tileS);
-    for(var gx = 0; gx < W; gx += tileS){
-      var g = spriteCache["grass" + (1 + ((Math.floor(gx / tileS) + Math.floor(scrollY / tileS)) % 4))];
-      if(g && g.complete) ctx.drawImage(g, gx, scrollY, tileS + 1, tileS + 1);
-      else { ctx.fillStyle = "#388e3c"; ctx.fillRect(gx, scrollY, tileS, tileS); }
-    }
-  }
-
-  for(var t = 0; t < 10; t++){
-    var ty = ((t * 150 - roadOffset * 0.55) % (H + 120)) - 60;
-    var treeImg = t % 3 === 0 ? spriteCache.treeBig : spriteCache.tree;
-    if(treeImg && treeImg.complete){
-      var tx = t % 2 === 0 ? roadL * 0.22 : roadR + (W - roadR) * 0.12;
-      var tw = tileS * (t % 3 === 0 ? 1.1 : 0.85);
-      ctx.drawImage(treeImg, tx - tw / 2, ty, tw, tw);
-    }
-    if(t % 4 === 0 && spriteCache.barrier && spriteCache.barrier.complete){
-      var bx = t % 2 === 0 ? roadL - 22 : roadR + 8;
-      ctx.drawImage(spriteCache.barrier, bx, ty + 20, 28, 28);
-    }
-  }
-
-  var roadTile = spriteCache.road;
-  for(var ry = -tileS; ry < H + tileS; ry += tileS){
-    var ry2 = ry + (roadOffset % tileS);
-    if(roadTile && roadTile.complete) ctx.drawImage(roadTile, roadL, ry2, roadR - roadL, tileS + 1);
-    else { ctx.fillStyle = "#616161"; ctx.fillRect(roadL, ry2, roadR - roadL, tileS); }
-  }
-
-  var edge = spriteCache.roadEdge;
-  if(edge && edge.complete){
-    for(var ey = -tileS; ey < H + tileS; ey += tileS){
-      var ey2 = ey + (roadOffset % tileS);
-      ctx.drawImage(edge, roadL - 10, ey2, 10, tileS);
-      ctx.drawImage(edge, roadR, ey2, 10, tileS);
-    }
-  }
-
-  var dashLen = 44;
-  roadOffset = (roadOffset + speed * (buffs.nitro > 0 || nitroHeld ? 1.55 : 1.1)) % dashLen;
-  for(var i = 0; i < LANES - 1; i++){
-    var lx = roadL + (roadR - roadL) * (i + 1) / LANES;
-    for(var y = -dashLen; y < H + dashLen; y += dashLen){
-      var dy = y + roadOffset;
-      ctx.fillStyle = "rgba(255,255,255,0.9)";
-      ctx.fillRect(lx - 2, dy, 4, dashLen * 0.48);
-    }
-  }
-
-  var skidImg = spriteCache.skid;
-  for(var s = 0; s < skidMarks.length; s++){
-    var m = skidMarks[s];
-    ctx.globalAlpha = m.life / 28 * 0.55;
-    if(skidImg && skidImg.complete){
-      ctx.drawImage(skidImg, m.x - carW * 0.25, m.y, carW * 0.5, carW * 0.2);
-    }
-    ctx.globalAlpha = 1;
-  }
-}
-
-function drawCarSprite(x, y, color, styleDef, isPlayer, facingDown){
-  var sf = styleDef || ENEMY_STYLES[0];
-  var frame = isPlayer ? driveFrame() : (1 + Math.floor((frameCount + x) / 12) % 5);
-  var img = getCarImg(isPlayer ? (CHAR_CAR[sel ? sel.id : "a"] || "red") : color, sf, frame);
-  var size = carDrawSize(sf);
-  var w = size.w, h = size.h;
-
-  ctx.save();
-  ctx.translate(x, y);
-  if(facingDown) ctx.scale(1, -1);
-  if(isPlayer && player.tilt) ctx.rotate(player.tilt * 0.1);
-
-  ctx.fillStyle = "rgba(0,0,0,0.2)";
-  ctx.beginPath();
-  ctx.ellipse(3, h * 0.08, w * 0.42, h * 0.18, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.drawImage(img, -w / 2, -h / 2, w, h);
-
-  if(isPlayer && sel){
-    var r = w * 0.2;
-    var ay = -h * 0.02;
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(0, ay, r, 0, Math.PI * 2);
-    ctx.fillStyle = "#fff";
-    ctx.fill();
-    ctx.clip();
-    var avImg = imgCache[sel.id];
-    if(avImg && avImg.complete) ctx.drawImage(avImg, -r, ay - r, r * 2, r * 2);
-    else {
-      ctx.font = (r * 1.4) + "px sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(sel.em, 0, ay);
-    }
-    ctx.restore();
-    ctx.strokeStyle = "#fff";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(0, ay, r, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
-  if(isPlayer && (invincible > 0 || buffs.shield > 0) && Math.floor(frameCount / 6) % 2 === 0){
-    ctx.strokeStyle = "rgba(66,165,245,0.85)";
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(0, 0, w * 0.58, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
-  if(isPlayer && (buffs.nitro > 0 || nitroHeld)){
-    ctx.fillStyle = "rgba(255,167,38," + (0.4 + Math.random() * 0.3) + ")";
-    var ny = facingDown ? -h * 0.52 : h * 0.52;
-    ctx.beginPath();
-    ctx.ellipse(0, ny, w * 0.1, h * 0.07, 0, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.restore();
-  return {w: w, h: h};
-}
-
-function drawPickup(e){
-  var size = carW * 0.75;
-  if(e.type === "coin"){
-    var star = spriteCache.star;
-    if(star && star.complete) drawSprite(star, e._x, e._y, size * 0.45, size, false);
-    else {
-      ctx.font = size + "px sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText("⭐", e._x, e._y);
-    }
-  } else if(e.type === "oil"){
-    var oil = spriteCache.oil;
-    if(oil && oil.complete) drawSprite(oil, e._x, e._y, size * 0.9, size * 0.8, false);
-  } else if(e.type === "cone"){
-    var cone = spriteCache.cone;
-    if(cone && cone.complete) drawSprite(cone, e._x, e._y, size * 0.55, size * 0.7, false);
-  } else if(e.type === "tire"){
-    var tires = spriteCache.tires;
-    if(tires && tires.complete) drawSprite(tires, e._x, e._y, size * 0.85, size * 0.55, false);
-  } else if(POWERUP_KINDS.indexOf(e.type) >= 0){
-    var pk = POWERUP_SPRITE[e.type];
-    var pu = pk ? spriteCache[pk] : null;
-    if(pu && pu.complete){
-      drawSprite(pu, e._x, e._y, size * 0.7, size * 0.7, false);
-      var em = ({shield:"🛡️",nitro:"⚡",magnet:"🧲",heart:"❤️"})[e.type];
-      ctx.font = (size * 0.38) + "px sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(em, e._x, e._y - size * 0.05);
-    } else {
-      var em2 = ({shield:"🛡️",nitro:"⚡",magnet:"🧲",heart:"❤️"})[e.type] || "✨";
-      ctx.font = size + "px sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillText(em2, e._x, e._y);
-    }
-  } else {
-    var em = ({shield:"🛡️",nitro:"⚡",magnet:"🧲",heart:"❤️"})[e.type] || "✨";
-    ctx.save();
-    ctx.translate(e._x, e._y);
-    ctx.rotate(Math.sin(e.spin) * 0.15);
-    ctx.font = size + "px sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText(em, 0, 0);
-    ctx.restore();
-  }
-}
-
 function laneChange(dir){
   if(gameState !== "playing") return;
   if(player.oilSlide > 0) dir *= -1;
   var next = player.targetLane + dir;
   if(next >= 0 && next < LANES){
     player.targetLane = next;
-    player.tilt = dir * 0.45;
-    skidMarks.push({x:player.x, y:playerY + carH * 0.2, life:28, lane:player.lane});
+    player.tilt = dir * 0.2;
     playLane();
   }
 }
@@ -739,7 +582,7 @@ function pickEnemyStyle(){
 function spawnEnemy(){
   var lane = Math.floor(Math.random() * LANES);
   var style = pickEnemyStyle();
-  var color = KENNEY_COLORS[Math.floor(Math.random() * KENNEY_COLORS.length)];
+  var color = CAR_COLORS[Math.floor(Math.random() * CAR_COLORS.length)];
   var tooClose = false;
   for(var i = 0; i < entities.length; i++){
     var e = entities[i];
@@ -833,9 +676,9 @@ function drawParticles(){
 }
 
 function updatePlayer(){
-  var lerp = player.oilSlide > 0 ? 0.1 : 0.2;
+  var lerp = player.oilSlide > 0 ? 0.08 : 0.14;
   player.lane += (player.targetLane - player.lane) * lerp;
-  player.tilt *= 0.8;
+  player.tilt *= 0.7;
   player.x = laneXAt(player.lane);
   if(Math.abs(player.targetLane - player.lane) < 0.02) player.lane = player.targetLane;
   if(player.oilSlide > 0) player.oilSlide--;
@@ -847,8 +690,8 @@ function entitySize(e){
 }
 
 function updateEntities(){
-  var nitroMul = (buffs.nitro > 0 || nitroHeld) ? 1.55 : 1;
-  var move = speed * 2.2 * nitroMul;
+  var nitroMul = (buffs.nitro > 0 || nitroHeld) ? 1.2 : 1;
+  var move = speed * 1.6 * nitroMul;
   for(var i = entities.length - 1; i >= 0; i--){
     var e = entities[i];
     e.y += move;
@@ -879,9 +722,8 @@ function updateEntities(){
           invincible = 90;
           combo = 0;
           comboTimer = 0;
-          shakeFrames = 14;
           playCrash();
-          addParticles(player.x, playerY, "#ff5252", 18);
+          addParticles(player.x, playerY, "#ff5252", 8);
           entities.splice(i, 1);
           if(lives <= 0) endGame();
         } else {
@@ -903,7 +745,6 @@ function updateEntities(){
           invincible = 70;
           combo = 0;
           comboTimer = 0;
-          shakeFrames = 10;
           playCrash();
           addParticles(player.x, playerY, "#ff9800", 12);
           entities.splice(i, 1);
@@ -948,7 +789,7 @@ function drawEntities(){
   entities.sort(function(a, b){ return a.y - b.y; });
   for(var i = 0; i < entities.length; i++){
     var e = entities[i];
-    if(e.type === "enemy") drawCarSprite(e._x, e._y, e.color, e.style, false, true);
+    if(e.type === "enemy") drawCalmCar(e._x, e._y, e.color, e.style, false, true);
     else drawPickup(e);
   }
 }
@@ -958,16 +799,16 @@ function gameLoop(){
   if(gameState !== "playing" && gameState !== "ready" && gameState !== "paused") return;
   frameCount++;
   if(gameState === "playing"){
-    var nitroMul = (buffs.nitro > 0 || nitroHeld) ? 1.5 : 1;
-    distance += speed * 0.18 * nitroMul;
-    if(speed < maxSpeed) speed += 0.0007;
+    var nitroMul = (buffs.nitro > 0 || nitroHeld) ? 1.2 : 1;
+    distance += speed * 0.14 * nitroMul;
+    if(speed < maxSpeed) speed += 0.0004;
     if(nitroHeld && frameCount % 8 === 0) playNitro();
 
     var nextWave = Math.floor(distance / 500) + 1;
     if(nextWave > wave){
       wave = nextWave;
       waveBannerTimer = 90;
-      document.getElementById("waveBanner").textContent = wave >= 4 ? "🏍️ 摩托车出没！" : "🏁 第 " + wave + " 段赛道";
+      document.getElementById("waveBanner").textContent = "🏁 第 " + wave + " 段赛道";
       document.getElementById("waveBanner").classList.add("show");
       playWave();
     }
@@ -1004,19 +845,11 @@ function gameLoop(){
     updateHUD();
   }
 
-  var shakeX = 0, shakeY = 0;
-  if(shakeFrames > 0){
-    shakeX = (Math.random() - 0.5) * 10;
-    shakeY = (Math.random() - 0.5) * 10;
-    shakeFrames--;
-  }
-
   ctx.save();
-  ctx.translate(shakeX, shakeY);
-  ctx.imageSmoothingEnabled = false;
+  ctx.imageSmoothingEnabled = true;
   drawRoad();
   drawEntities();
-  drawCarSprite(player.x, playerY, null, {variant:1, small:false, w:0.98, h:1.2}, true, false);
+  drawCalmCar(player.x, playerY, CHAR_CAR[sel ? sel.id : "a"] || "red", {w:0.95, h:1.15}, true, false);
   drawParticles();
   drawFloatTexts();
   ctx.restore();
@@ -1081,24 +914,20 @@ function beginPlay(){
 function startGame(){
   if(!sel) return;
   unlockAudio();
-  document.getElementById("loadOverlay").classList.add("show");
-  loadSprites().then(function(){
-    document.getElementById("loadOverlay").classList.remove("show");
-    document.getElementById("charSelect").classList.remove("active");
-    document.getElementById("gameUI").classList.add("active");
-    document.getElementById("gameOverOverlay").classList.remove("show");
-    document.getElementById("readyMsg").style.display = "block";
-    document.getElementById("pauseMsg").style.display = "none";
-    canvas = document.getElementById("gameCanvas");
-    ctx = canvas.getContext("2d");
-    resizeCanvas();
-    resetGame();
-    gameState = "ready";
-    bindInput();
-    if(gameLoopId) cancelAnimationFrame(gameLoopId);
-    gameLoop();
-    window.addEventListener("resize", resizeCanvas);
-  });
+  document.getElementById("charSelect").classList.remove("active");
+  document.getElementById("gameUI").classList.add("active");
+  document.getElementById("gameOverOverlay").classList.remove("show");
+  document.getElementById("readyMsg").style.display = "block";
+  document.getElementById("pauseMsg").style.display = "none";
+  canvas = document.getElementById("gameCanvas");
+  ctx = canvas.getContext("2d");
+  resizeCanvas();
+  resetGame();
+  gameState = "ready";
+  bindInput();
+  if(gameLoopId) cancelAnimationFrame(gameLoopId);
+  gameLoop();
+  window.addEventListener("resize", resizeCanvas);
 }
 
 function togglePause(){
@@ -1156,8 +985,6 @@ document.addEventListener("keydown", function(e){
 
 buildCharGrid();
 loadBest();
-loadSprites();
 </script>
-<!-- Car/road sprites: Kenney Racing Pack (CC0) https://kenney.nl/assets/racing-pack -->
 </body>
 </html>
