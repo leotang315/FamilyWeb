@@ -107,6 +107,7 @@ body{
 .game-card:nth-child(6){animation-delay:.9s}
 .game-card:nth-child(7){animation-delay:1.05s}
 .game-card:nth-child(8){animation-delay:1.2s}
+.game-card:nth-child(9){animation-delay:1.35s}
 .game-card::before{
   content:"";position:absolute;top:0;left:0;right:0;height:6px;
 }
@@ -118,6 +119,7 @@ body{
 .game-card.fruit::before{background:linear-gradient(90deg,#ff9800,#ffcc02)}
 .game-card.english::before{background:linear-gradient(90deg,#5c6bc0,#7986cb)}
 .game-card.ludo::before{background:linear-gradient(90deg,#1565c0,#42a5f5)}
+.game-card.racing::before{background:linear-gradient(90deg,#e53935,#ff7043)}
 .game-card:hover{
   transform:translateY(-8px) scale(1.02);
   box-shadow:0 20px 60px rgba(0,0,0,.18);
@@ -138,6 +140,7 @@ body{
 .game-card.fruit::after{background:#ff9800}
 .game-card.english::after{background:#5c6bc0}
 .game-card.ludo::after{background:#1565c0}
+.game-card.racing::after{background:#e53935}
 .game-card:hover::after{transform:scale(3);opacity:.1}
 
 /* 卡片图标 */
@@ -213,6 +216,17 @@ body{
 }
 .game-card.ludo .game-tag{
   background:#e3f2fd;color:#1565c0;
+}
+.game-card.racing .game-title{color:#c62828}
+.game-card.racing .icon-wrap{
+  background:linear-gradient(135deg,#ffebee,#ffcdd2);
+  box-shadow:0 8px 24px rgba(229,57,53,.2);
+}
+.game-card.racing:hover .icon-wrap{
+  box-shadow:0 12px 36px rgba(229,57,53,.35);
+}
+.game-card.racing .game-tag{
+  background:#ffebee;color:#e53935;
 }
 
 /* 卡片描述 */
@@ -339,6 +353,17 @@ body{
       <div class="game-tag">🎲 2~4 人 · 人机/同屏</div>
     </div>
 
+    <!-- 赛车卡片 -->
+    <div class="game-card racing" onclick="goToRacing()">
+      <div class="icon-wrap">
+        🏎️
+        <span class="icon-badge">🏁</span>
+      </div>
+      <div class="game-title">极速赛车</div>
+      <div class="game-desc">三条赛道极速狂飙，<br>躲避车辆，收集星星冲最远！</div>
+      <div class="game-tag">🏎️ 9个角色可选</div>
+    </div>
+
     <!-- 学英语卡片 -->
     <div class="game-card english" onclick="goToEnglish()">
       <div class="icon-wrap">
@@ -351,7 +376,7 @@ body{
     </div>
   </div>
 
-  <div class="footer-text">✈️ 新游戏「飞行棋」上线啦！掷骰出发 🎲</div>
+  <div class="footer-text">🏎️ 新游戏「极速赛车」上线啦！踩下油门出发 🏁</div>
 
 </div>
 </div>
@@ -364,6 +389,7 @@ function goToSpace(){window.location.href="space.html"}
 function goToTank(){window.location.href="tank.html"}
 function goToFruit(){window.location.href="fruit.html"}
 function goToLudo(){window.location.href="ludo.html"}
+function goToRacing(){window.location.href="racing.html"}
 function goToEnglish(){window.location.href="english.html"}
 </script>
 </body>
